@@ -122,10 +122,21 @@ class ScoreResponse(BaseModel):
     mechanism_explained: bool | None
     example_given: bool | None
     edge_cases_mentioned: bool | None
-    missing_concepts: list[str] | None
+    missing_concepts: list[str] | None = None
     follow_up_angle: str | None
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        """Handle missing_concepts stored as JSON string in SQLite."""
+        import json
+        if hasattr(obj, 'missing_concepts') and isinstance(obj.missing_concepts, str):
+            try:
+                obj.__dict__['missing_concepts'] = json.loads(obj.missing_concepts)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return super().model_validate(obj, **kwargs)
 
 
 # ─── Answer Processing Response ───────────────────────────────
