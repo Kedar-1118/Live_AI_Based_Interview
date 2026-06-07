@@ -1,9 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import (
-    Text, Integer, Float, Boolean, BigInteger, DateTime, ForeignKey, String
+    Text, Integer, Float, Boolean, BigInteger, DateTime, ForeignKey, String, JSON
 )
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
@@ -22,7 +21,7 @@ class Score(Base):
     mechanism_explained: Mapped[bool | None] = mapped_column(Boolean)
     example_given: Mapped[bool | None] = mapped_column(Boolean)
     edge_cases_mentioned: Mapped[bool | None] = mapped_column(Boolean)
-    missing_concepts: Mapped[list | None] = mapped_column(ARRAY(Text))
+    missing_concepts: Mapped[str | None] = mapped_column(Text)  # JSON string for SQLite compat
     follow_up_angle: Mapped[str | None] = mapped_column(Text)
     wpm: Mapped[int | None] = mapped_column(Integer)
     filler_count: Mapped[int | None] = mapped_column(Integer)
@@ -48,7 +47,7 @@ class IntegrityEvent(Base):
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     severity: Mapped[str | None] = mapped_column(String(20))
     timestamp_ms: Mapped[int | None] = mapped_column(BigInteger)
-    metadata_json: Mapped[dict | None] = mapped_column(JSONB)
+    metadata_json: Mapped[str | None] = mapped_column(Text)  # JSON string for SQLite compat
 
 
 class WeakTopic(Base):
@@ -84,7 +83,7 @@ class Baseline(Base):
     gaze_center_x: Mapped[float | None] = mapped_column(Float)
     gaze_center_y: Mapped[float | None] = mapped_column(Float)
     gaze_std_dev: Mapped[float | None] = mapped_column(Float)
-    head_pose_range: Mapped[dict | None] = mapped_column(JSONB)
+    head_pose_range: Mapped[str | None] = mapped_column(Text)  # JSON string for SQLite compat
     captured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

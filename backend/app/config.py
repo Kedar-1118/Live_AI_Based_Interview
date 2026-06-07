@@ -1,11 +1,13 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
 
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://interview_user:interview_pass@localhost:5432/interview_db"
-    DATABASE_URL_SYNC: str = "postgresql://interview_user:interview_pass@localhost:5432/interview_db"
+    # Database — defaults to SQLite for easy development
+    # Set DATABASE_URL to a PostgreSQL connection string for production
+    DATABASE_URL: str = "sqlite+aiosqlite:///./interview.db"
+    DATABASE_URL_SYNC: str = "sqlite:///./interview.db"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
@@ -24,8 +26,12 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    @property
+    def is_sqlite(self) -> bool:
+        return "sqlite" in self.DATABASE_URL
+
     model_config = {
-        "env_file": ".env",
+        "env_file": os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", ".env"),
         "env_file_encoding": "utf-8",
         "extra": "ignore",
     }
