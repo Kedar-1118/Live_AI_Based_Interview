@@ -1,4 +1,5 @@
 from uuid import UUID
+import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,7 +86,7 @@ async def submit_answer(
         mechanism_explained=evaluation.mechanism_explained,
         example_given=evaluation.example_given,
         edge_cases_mentioned=evaluation.edge_cases_mentioned,
-        missing_concepts=evaluation.missing_concepts,
+        missing_concepts=json.dumps(evaluation.missing_concepts) if evaluation.missing_concepts else None,
         follow_up_angle=evaluation.follow_up_angle,
     )
     db.add(score)

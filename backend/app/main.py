@@ -1,8 +1,11 @@
+import json
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
+from app.db.database import engine, Base
+from app.models import *  # noqa: F401, F403 — Import all models to register them
 from app.routers.auth import router as auth_router
 from app.routers.sessions import router as sessions_router
 from app.routers.answers import router as answers_router
@@ -22,6 +25,13 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown."""
     logger.info("Starting AI Interview Simulator API")
+
+    # Create tables if using SQLite (development mode)
+    if settings.is_sqlite:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("SQLite database tables created")
+
     yield
     logger.info("Shutting down AI Interview Simulator API")
 
