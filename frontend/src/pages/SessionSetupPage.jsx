@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useSessionStore from '../../store/sessionStore';
+import useSessionStore from '../store/sessionStore';
 import './SessionSetupPage.css';
 
 const TOPICS = [

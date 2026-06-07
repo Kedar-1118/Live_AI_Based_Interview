@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { userAPI } from '../../services/api';
-import useAuthStore from '../../store/authStore';
+import { userAPI } from '../services/api';
+import useAuthStore from '../store/authStore';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
