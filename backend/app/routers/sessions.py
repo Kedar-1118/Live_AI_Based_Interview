@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
 from app.dependencies import get_current_user
@@ -31,7 +32,6 @@ async def create_session(
     )
     db.add(session)
     await db.flush()
-    await db.refresh(session)
 
     # Generate the first question
     first_question = await generate_first_question(
@@ -47,7 +47,14 @@ async def create_session(
     )
     db.add(exchange)
     await db.flush()
-    await db.refresh(session)
+
+    # Eagerly re-load with exchanges + scores
+    result = await db.execute(
+        select(Session)
+        .where(Session.id == session.id)
+        .options(selectinload(Session.exchanges).selectinload(Exchange.score))
+    )
+    session = result.scalar_one()
 
     return SessionResponse.model_validate(session)
 
@@ -60,10 +67,9 @@ async def get_session(
 ):
     """Get session details with all exchanges."""
     result = await db.execute(
-        select(Session).where(
-            Session.id == session_id,
-            Session.user_id == user.id,
-        )
+        select(Session)
+        .where(Session.id == session_id, Session.user_id == user.id)
+        .options(selectinload(Session.exchanges).selectinload(Exchange.score))
     )
     session = result.scalar_one_or_none()
 
@@ -84,10 +90,9 @@ async def end_session(
 ):
     """End an active session."""
     result = await db.execute(
-        select(Session).where(
-            Session.id == session_id,
-            Session.user_id == user.id,
-        )
+        select(Session)
+        .where(Session.id == session_id, Session.user_id == user.id)
+        .options(selectinload(Session.exchanges).selectinload(Exchange.score))
     )
     session = result.scalar_one_or_none()
 
@@ -106,6 +111,5 @@ async def end_session(
     session.status = "completed"
     session.ended_at = datetime.now(timezone.utc)
     await db.flush()
-    await db.refresh(session)
 
     return SessionResponse.model_validate(session)

@@ -1,6 +1,7 @@
+import json
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ─── Auth Schemas ─────────────────────────────────────────────
@@ -127,16 +128,16 @@ class ScoreResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("missing_concepts", mode="before")
     @classmethod
-    def model_validate(cls, obj, **kwargs):
+    def parse_missing_concepts(cls, v):
         """Handle missing_concepts stored as JSON string in SQLite."""
-        import json
-        if hasattr(obj, 'missing_concepts') and isinstance(obj.missing_concepts, str):
+        if isinstance(v, str):
             try:
-                obj.__dict__['missing_concepts'] = json.loads(obj.missing_concepts)
+                return json.loads(v)
             except (json.JSONDecodeError, TypeError):
-                pass
-        return super().model_validate(obj, **kwargs)
+                return [v]
+        return v
 
 
 # ─── Answer Processing Response ───────────────────────────────
