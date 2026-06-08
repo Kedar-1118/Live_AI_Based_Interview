@@ -20,6 +20,11 @@ class Settings(BaseSettings):
 
     # AI
     ANTHROPIC_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+
+    # Audio / Voice Pipeline
+    UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+    MAX_AUDIO_SIZE_MB: int = 25  # Whisper API limit
 
     # App
     APP_NAME: str = "AI Interview Simulator"

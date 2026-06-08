@@ -54,6 +54,11 @@ export const sessionAPI = {
 
 export const answerAPI = {
   submit: (data) => api.post('/answers/submit', data),
+  submitAudio: (formData) =>
+    api.post('/answers/submit-audio', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000, // 60s timeout for audio processing
+    }),
 };
 
 // ─── User API ─────────────────────────────────────────────

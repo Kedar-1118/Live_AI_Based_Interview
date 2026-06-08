@@ -13,3 +13,10 @@ python-dotenv==1.0.1
 httpx==0.27.2
 aiosqlite==0.20.0
 email-validator==2.1.1
+# Week 2 — Voice Pipeline
+openai==1.51.0
+librosa==0.10.2
+pydub==0.25.1
+soundfile==0.12.1
+scipy==1.14.1
+numpy==1.26.4

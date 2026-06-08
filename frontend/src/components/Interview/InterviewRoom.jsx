@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useSessionStore from '../../store/sessionStore';
 import QuestionDisplay from './QuestionDisplay';
+import AudioRecorder from './AudioRecorder';
 import './InterviewRoom.css';
+import './AudioRecorder.css';
 
 export default function InterviewRoom() {
   const { sessionId } = useParams();
@@ -20,11 +22,26 @@ export default function InterviewRoom() {
     session,
     exchanges,
     submitAnswer,
+    submitAudioAnswer,
     endSession,
     resetSession,
     error,
+    inputMode,
+    setInputMode,
+    latestTranscript,
+    latestSpeechAnalysis,
   } = useSessionStore();
 
+  // Handle audio recording completed
+  const handleAudioReady = useCallback(async (audioBlob) => {
+    setShowEvaluation(false);
+    const result = await submitAudioAnswer(audioBlob);
+    if (result) {
+      setShowEvaluation(true);
+    }
+  }, [submitAudioAnswer]);
+
+  // Handle text answer submit (fallback)
   const handleSubmitAnswer = async () => {
     if (!answerText.trim() || isSubmitting) return;
 
@@ -51,7 +68,7 @@ export default function InterviewRoom() {
     }
   };
 
-  // Session complete view
+  // ─── Session Complete View ─────────────────────────────────
   if (sessionComplete) {
     const answeredExchanges = exchanges.filter((e) => e.answer_transcript);
     const scores = answeredExchanges
@@ -145,6 +162,7 @@ export default function InterviewRoom() {
     );
   }
 
+  // ─── Active Interview View ─────────────────────────────────
   return (
     <div className="page">
       <div className="bg-orb bg-orb-1" />
@@ -197,6 +215,68 @@ export default function InterviewRoom() {
                 </div>
               </div>
 
+              {/* Speech Analysis Metrics (Voice mode only) */}
+              {latestSpeechAnalysis && (
+                <div className="speech-metrics">
+                  <div className="speech-metric">
+                    <span className={`speech-metric-value ${
+                      latestSpeechAnalysis.avg_wpm >= 120 && latestSpeechAnalysis.avg_wpm <= 180
+                        ? 'metric-good'
+                        : latestSpeechAnalysis.avg_wpm >= 80
+                          ? 'metric-warning'
+                          : 'metric-bad'
+                    }`}>
+                      {Math.round(latestSpeechAnalysis.avg_wpm)}
+                    </span>
+                    <span className="speech-metric-label">WPM</span>
+                  </div>
+                  <div className="speech-metric">
+                    <span className={`speech-metric-value ${
+                      latestSpeechAnalysis.filler_count <= 2
+                        ? 'metric-good'
+                        : latestSpeechAnalysis.filler_count <= 5
+                          ? 'metric-warning'
+                          : 'metric-bad'
+                    }`}>
+                      {latestSpeechAnalysis.filler_count}
+                    </span>
+                    <span className="speech-metric-label">Fillers</span>
+                  </div>
+                  <div className="speech-metric">
+                    <span className={`speech-metric-value ${
+                      latestSpeechAnalysis.longest_pause_seconds <= 3
+                        ? 'metric-good'
+                        : latestSpeechAnalysis.longest_pause_seconds <= 6
+                          ? 'metric-warning'
+                          : 'metric-bad'
+                    }`}>
+                      {latestSpeechAnalysis.longest_pause_seconds.toFixed(1)}s
+                    </span>
+                    <span className="speech-metric-label">Longest Pause</span>
+                  </div>
+                  <div className="speech-metric">
+                    <span className={`speech-metric-value ${
+                      latestSpeechAnalysis.confidence_proxy >= 0.7
+                        ? 'metric-good'
+                        : latestSpeechAnalysis.confidence_proxy >= 0.4
+                          ? 'metric-warning'
+                          : 'metric-bad'
+                    }`}>
+                      {Math.round(latestSpeechAnalysis.confidence_proxy * 100)}%
+                    </span>
+                    <span className="speech-metric-label">Confidence</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Transcript (Voice mode) */}
+              {latestTranscript && (
+                <div className="transcript-section">
+                  <p className="transcript-label">Your Answer (Transcribed)</p>
+                  <div className="transcript-text">{latestTranscript}</div>
+                </div>
+              )}
+
               <div className="evaluation-rubric">
                 <div className={`rubric-item ${latestEvaluation.definition_present ? 'rubric-pass' : 'rubric-fail'}`}>
                   {latestEvaluation.definition_present ? '✓' : '✗'} Definition
@@ -225,18 +305,54 @@ export default function InterviewRoom() {
             </div>
           )}
 
-          {/* Answer Input */}
+          {/* Answer Input — Voice or Text */}
           <div className="answer-section">
-            <label className="label" htmlFor="answer-input">Your Answer</label>
-            <textarea
-              id="answer-input"
-              className="input textarea"
-              placeholder="Type your answer here... (Ctrl+Enter to submit)"
-              value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSubmitting}
-            />
+            {inputMode === 'voice' ? (
+              <AudioRecorder
+                onAudioReady={handleAudioReady}
+                isProcessing={isSubmitting}
+                disabled={!currentQuestion}
+              />
+            ) : (
+              <>
+                <label className="label" htmlFor="answer-input">Your Answer</label>
+                <textarea
+                  id="answer-input"
+                  className="input textarea"
+                  placeholder="Type your answer here... (Ctrl+Enter to submit)"
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSubmitting}
+                />
+
+                <div className="answer-actions">
+                  <span className="answer-hint">
+                    Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit
+                  </span>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSubmitAnswer}
+                    disabled={!answerText.trim() || isSubmitting}
+                    id="btn-submit-answer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="spinner" />
+                        Evaluating...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                          <path d="M16 2L8 10M16 2L11 16L8 10M16 2L2 7L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Submit Answer
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
 
             {error && (
               <div className="auth-error" style={{ marginTop: '12px' }}>
@@ -244,29 +360,20 @@ export default function InterviewRoom() {
               </div>
             )}
 
-            <div className="answer-actions">
-              <span className="answer-hint">
-                Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit
-              </span>
+            {/* Input Mode Toggle */}
+            <div className="input-mode-toggle">
               <button
-                className="btn btn-primary"
-                onClick={handleSubmitAnswer}
-                disabled={!answerText.trim() || isSubmitting}
-                id="btn-submit-answer"
+                className={inputMode === 'voice' ? 'active' : ''}
+                onClick={() => setInputMode('voice')}
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="spinner" />
-                    Evaluating...
-                  </>
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <path d="M16 2L8 10M16 2L11 16L8 10M16 2L2 7L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Submit Answer
-                  </>
-                )}
+                🎤 Voice
+              </button>
+              <div className="toggle-divider" />
+              <button
+                className={inputMode === 'text' ? 'active' : ''}
+                onClick={() => setInputMode('text')}
+              >
+                ⌨️ Text
               </button>
             </div>
           </div>

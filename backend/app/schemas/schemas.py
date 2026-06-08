@@ -150,6 +150,36 @@ class AnswerProcessingResponse(BaseModel):
     session_complete: bool = False
 
 
+# ─── Voice Pipeline Schemas ───────────────────────────────────
+
+class WordTimestamp(BaseModel):
+    word: str
+    start: float
+    end: float
+
+
+class SpeechAnalysisResponse(BaseModel):
+    avg_wpm: float = 0.0
+    wpm_std_dev: float = 0.0
+    total_duration: float = 0.0
+    word_count: int = 0
+    pause_count: int = 0
+    longest_pause_seconds: float = 0.0
+    filler_count: int = 0
+    filler_words: list[str] = []
+    confidence_proxy: float = 0.0
+
+
+class AudioAnswerProcessingResponse(BaseModel):
+    exchange_id: UUID
+    transcript: str
+    evaluation: EvaluationResult
+    speech_analysis: SpeechAnalysisResponse
+    next_question: str | None
+    question_index: int
+    session_complete: bool = False
+
+
 # ─── Dashboard Schemas ────────────────────────────────────────
 
 class DashboardResponse(BaseModel):
@@ -158,3 +188,4 @@ class DashboardResponse(BaseModel):
     avg_score: float | None
     total_questions_answered: int
     recent_sessions: list[SessionSummary]
+
