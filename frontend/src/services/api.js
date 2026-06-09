@@ -67,4 +67,5 @@ export const userAPI = {
   me: () => api.get('/users/me'),
   dashboard: () => api.get('/users/me/dashboard'),
   sessions: () => api.get('/users/me/sessions'),
+  weakTopics: () => api.get('/users/me/weak-topics'),
 };

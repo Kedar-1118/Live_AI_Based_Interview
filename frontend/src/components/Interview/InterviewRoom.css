@@ -25,6 +25,28 @@
   color: var(--text-primary);
 }
 
+/* Week 3: Memory Active Indicator */
+.memory-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-purple);
+  background: rgba(118, 75, 162, 0.12);
+  border: 1px solid rgba(118, 75, 162, 0.25);
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.03em;
+  animation: memory-pulse 3s ease-in-out infinite;
+  cursor: help;
+}
+
+@keyframes memory-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; box-shadow: 0 0 8px rgba(118, 75, 162, 0.3); }
+}
+
 .session-info-right {
   display: flex;
   align-items: center;

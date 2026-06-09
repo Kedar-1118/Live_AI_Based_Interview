@@ -7,6 +7,7 @@ import './DashboardPage.css';
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const [dashboard, setDashboard] = useState(null);
+  const [weakTopics, setWeakTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -15,8 +16,12 @@ export default function DashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const response = await userAPI.dashboard();
-      setDashboard(response.data);
+      const [dashRes, weakRes] = await Promise.all([
+        userAPI.dashboard(),
+        userAPI.weakTopics().catch(() => ({ data: [] })),
+      ]);
+      setDashboard(dashRes.data);
+      setWeakTopics(weakRes.data || []);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
@@ -39,6 +44,22 @@ export default function DashboardPage() {
       completed: 'badge-completed',
     };
     return `badge ${classes[status] || ''}`;
+  };
+
+  const getScoreColor = (score) => {
+    if (score === null || score === undefined) return 'wt-score-none';
+    if (score <= 3) return 'wt-score-critical';
+    if (score <= 5) return 'wt-score-weak';
+    if (score <= 7) return 'wt-score-moderate';
+    return 'wt-score-good';
+  };
+
+  const getScoreLabel = (score) => {
+    if (score === null || score === undefined) return 'N/A';
+    if (score <= 3) return 'Critical';
+    if (score <= 5) return 'Weak';
+    if (score <= 7) return 'Moderate';
+    return 'Strong';
   };
 
   if (isLoading) {
@@ -200,6 +221,48 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Week 3: Weak Topics Heatmap */}
+        {weakTopics.length > 0 && (
+          <div className="weak-topics-section animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="section-header">
+              <h2 className="section-title">Weak Topics</h2>
+              <p className="section-subtitle">Areas that need more practice across sessions</p>
+            </div>
+
+            <div className="weak-topics-grid">
+              {weakTopics.map((wt, index) => (
+                <div
+                  key={wt.id}
+                  className={`weak-topic-card glass-card ${getScoreColor(wt.avg_score)} animate-slide-in`}
+                  style={{ animationDelay: `${0.04 * index}s` }}
+                >
+                  <div className="wt-header">
+                    <span className="wt-topic">{wt.topic}</span>
+                    <span className={`wt-severity-badge ${getScoreColor(wt.avg_score)}`}>
+                      {getScoreLabel(wt.avg_score)}
+                    </span>
+                  </div>
+                  <div className="wt-subtopic">{wt.subtopic || 'General'}</div>
+                  <div className="wt-footer">
+                    <div className="wt-score-bar">
+                      <div
+                        className="wt-score-fill"
+                        style={{ width: `${((wt.avg_score || 0) / 10) * 100}%` }}
+                      />
+                    </div>
+                    <div className="wt-meta">
+                      <span className="wt-avg">{wt.avg_score?.toFixed(1) || '—'}/10</span>
+                      <span className="wt-occurrences">
+                        {wt.occurrence} {wt.occurrence === 1 ? 'time' : 'times'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
