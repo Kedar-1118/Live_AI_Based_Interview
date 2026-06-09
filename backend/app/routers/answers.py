@@ -21,6 +21,12 @@ from app.schemas.schemas import (
 from app.services.evaluator_agent import evaluate_answer
 from app.services.interviewer_agent import generate_next_question
 from app.services.transcription_service import transcribe_audio
+from app.services.vector_memory import (
+    embed_and_store_exchange,
+    retrieve_relevant_weak_answers,
+    format_retrieved_context,
+)
+from app.services.weak_topic_tracker import update_weak_topics
 from app.services.speech_analyzer import analyze_speech
 
 logger = logging.getLogger(__name__)
@@ -62,6 +68,27 @@ async def _process_evaluation_and_next_question(
     db.add(score)
     await db.flush()
 
+    # ─── Week 3: Embed exchange + update weak topics (non-blocking) ───
+    try:
+        await embed_and_store_exchange(
+            exchange_id=current_exchange.id,
+            question=current_exchange.question,
+            answer=transcript,
+            db=db,
+        )
+    except Exception as e:
+        logger.warning(f"Embedding storage failed (non-critical): {e}")
+
+    try:
+        await update_weak_topics(
+            user_id=session.user_id,
+            topic=session.topic,
+            evaluation=evaluation,
+            db=db,
+        )
+    except Exception as e:
+        logger.warning(f"Weak topic update failed (non-critical): {e}")
+
     # Check if session is complete
     next_index = current_exchange.question_index + 1
     session_complete = next_index > session.total_questions
@@ -88,7 +115,21 @@ async def _process_evaluation_and_next_question(
             f"Average score: {avg_score:.1f}/10."
         )
 
-        # Generate next question
+        # ─── Week 3: Retrieve cross-session memory context ────────
+        retrieved_context = ""
+        try:
+            weak_answers = await retrieve_relevant_weak_answers(
+                user_id=session.user_id,
+                current_question=current_exchange.question,
+                db=db,
+            )
+            retrieved_context = format_retrieved_context(weak_answers)
+            if retrieved_context:
+                logger.info(f"Injecting {len(weak_answers)} retrieved weak answers into interviewer context")
+        except Exception as e:
+            logger.warning(f"Memory retrieval failed (non-critical): {e}")
+
+        # Generate next question (with memory context)
         next_question_text = await generate_next_question(
             topic=session.topic,
             difficulty=session.difficulty,
@@ -96,6 +137,7 @@ async def _process_evaluation_and_next_question(
             question_index=next_index,
             total_questions=session.total_questions,
             performance_summary=performance_summary,
+            retrieved_context=retrieved_context,
         )
 
         # Create next exchange

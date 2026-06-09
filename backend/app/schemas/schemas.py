@@ -189,3 +189,17 @@ class DashboardResponse(BaseModel):
     total_questions_answered: int
     recent_sessions: list[SessionSummary]
 
+
+# ─── Weak Topic Schemas (Week 3) ─────────────────────────────
+
+class WeakTopicResponse(BaseModel):
+    id: UUID
+    topic: str
+    subtopic: str | None
+    avg_score: float | None
+    occurrence: int
+    last_seen: datetime
+
+    model_config = {"from_attributes": True}
+
+
