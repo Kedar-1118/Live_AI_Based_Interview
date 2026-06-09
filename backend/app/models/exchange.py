@@ -17,7 +17,9 @@ class Exchange(Base):
     question: Mapped[str] = mapped_column(Text, nullable=False)
     answer_transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
     question_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    # embedding column deferred to Week 3 (pgvector)
+    # Week 3: embedding stored as JSON-serialized float array (SQLite-compatible)
+    # In production with PostgreSQL, this would be a pgvector column: vector(1536)
+    embedding: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
