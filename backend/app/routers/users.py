@@ -7,7 +7,8 @@ from app.models.user import User
 from app.models.session import Session
 from app.models.exchange import Exchange
 from app.models.integrity import Score
-from app.schemas.schemas import DashboardResponse, SessionSummary, UserResponse
+from app.schemas.schemas import DashboardResponse, SessionSummary, UserResponse, WeakTopicResponse
+from app.services.weak_topic_tracker import get_user_weak_topics
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -125,3 +126,13 @@ async def get_my_sessions(
         ))
 
     return summaries
+
+
+@router.get("/me/weak-topics", response_model=list[WeakTopicResponse])
+async def get_weak_topics(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the current user's weak topics, ordered by lowest score."""
+    topics = await get_user_weak_topics(user_id=user.id, db=db)
+    return [WeakTopicResponse.model_validate(t) for t in topics]
