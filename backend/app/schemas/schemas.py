@@ -202,4 +202,31 @@ class WeakTopicResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+# ─── Calibration Schemas (Week 4) ───────────────────────────
 
+class HeadPoseRange(BaseModel):
+    yaw: list[float]
+    pitch: list[float]
+
+
+class CalibrationCompleteRequest(BaseModel):
+    avg_wpm: float
+    wpm_std_dev: float
+    gaze_center_x: float
+    gaze_center_y: float
+    gaze_std_dev: float
+    head_pose_range: HeadPoseRange
+
+
+class BaselineResponse(BaseModel):
+    id: UUID
+    session_id: UUID
+    avg_wpm: float | None
+    wpm_std_dev: float | None
+    gaze_center_x: float | None
+    gaze_center_y: float | None
+    gaze_std_dev: float | None
+    head_pose_range: str | None
+    captured_at: datetime
+
+    model_config = {"from_attributes": True}

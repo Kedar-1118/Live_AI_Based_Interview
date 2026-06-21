@@ -48,6 +48,13 @@ export const sessionAPI = {
   create: (data) => api.post('/sessions/create', data),
   get: (id) => api.get(`/sessions/${id}`),
   end: (id) => api.patch(`/sessions/${id}/end`),
+  getBaseline: (id) => api.get(`/sessions/${id}/baseline`),
+  submitCalibration: (id, formData) => api.post(`/sessions/${id}/calibration/submit`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  }),
+  completeCalibration: (id, data) => api.post(`/sessions/${id}/calibration/complete`, data),
+  getReport: (id) => api.get(`/sessions/${id}/report`),
 };
 
 // ─── Answer API ───────────────────────────────────────────

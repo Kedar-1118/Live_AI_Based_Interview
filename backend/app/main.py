@@ -10,6 +10,7 @@ from app.routers.auth import router as auth_router
 from app.routers.sessions import router as sessions_router
 from app.routers.answers import router as answers_router
 from app.routers.users import router as users_router
+from app.routers.websocket import router as websocket_router
 
 settings = get_settings()
 
@@ -57,6 +58,7 @@ app.include_router(auth_router)
 app.include_router(sessions_router)
 app.include_router(answers_router)
 app.include_router(users_router)
+app.include_router(websocket_router)
 
 
 @app.get("/health")

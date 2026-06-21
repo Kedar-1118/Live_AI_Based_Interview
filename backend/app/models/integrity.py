@@ -27,6 +27,7 @@ class Score(Base):
     filler_count: Mapped[int | None] = mapped_column(Integer)
     longest_pause_seconds: Mapped[float | None] = mapped_column(Float)
     confidence_proxy: Mapped[float | None] = mapped_column(Float)
+    gaze_fluency_correlation: Mapped[float | None] = mapped_column(Float)
 
     # Relationships
     exchange = relationship("Exchange", back_populates="score")

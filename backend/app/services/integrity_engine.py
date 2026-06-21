@@ -51,6 +51,14 @@ async def process_behavioral_signal(
     buffer.append(signal)
     _cleanup_buffer(session_id_str, current_ts)
 
+    # 0. Custom direct event sent from client (e.g. tab_switch, fullscreen_exit)
+    if "event_type" in signal:
+        event_type = signal["event_type"]
+        severity = signal.get("severity", "medium")
+        metadata = signal.get("metadata", {"message": f"Client reported event: {event_type}"})
+        await _log_and_notify_event_if_new(session_id, event_type, severity, current_ts, metadata, db)
+        return
+
     # 1. Face Count Check
     face_count = signal.get("face_count", 1)
     event_type = None

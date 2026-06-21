@@ -331,6 +331,31 @@ async def submit_audio_answer(
     current_exchange.answer_transcript = transcription_result.transcript
     await db.flush()
 
+    # Calculate gaze-fluency correlation
+    from app.services.integrity_engine import compute_gaze_fluency_correlation, update_integrity_score
+    
+    correlation = 0.0
+    try:
+        correlation = await compute_gaze_fluency_correlation(
+            session_id=session.id,
+            exchange_id=current_exchange.id,
+            wpm_segments=speech_analysis.wpm_segments,
+            db=db,
+        )
+    except Exception as e:
+        logger.error(f"Error calculating correlation: {e}")
+
+    # Update session integrity score
+    try:
+        await update_integrity_score(
+            session_id=session.id,
+            correlation=correlation,
+            exchange_id=current_exchange.id,
+            db=db,
+        )
+    except Exception as e:
+        logger.error(f"Error updating integrity score: {e}")
+
     # ─── Sequential: Evaluation + Next Question ───────────────
 
     evaluation, next_question_text, session_complete = (
@@ -349,6 +374,7 @@ async def submit_audio_answer(
         score.filler_count = speech_analysis.filler_count
         score.longest_pause_seconds = speech_analysis.longest_pause_seconds
         score.confidence_proxy = speech_analysis.confidence_proxy
+        score.gaze_fluency_correlation = correlation
         await db.flush()
 
     # Build speech analysis response
