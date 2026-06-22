@@ -42,7 +42,8 @@ npm run dev
 ```
 
 ### 4. Open the App
-- Frontend: [http://localhost:5173](http://localhost:5173)
+- Frontend: [http://localhost:5173](http://localhost:
+)
 - Backend API: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## Environment Variables
