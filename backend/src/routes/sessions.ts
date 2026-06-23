@@ -20,7 +20,7 @@ const upload = multer({
 
 // POST /sessions/create
 router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
-  const { topic, difficulty, duration_minutes, total_questions } = req.body;
+  const { topic, difficulty, duration_minutes, total_questions, llm_provider, llm_model } = req.body;
 
   if (!topic) {
     return res.status(400).json({ detail: 'Topic is required' });
@@ -31,11 +31,14 @@ router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
     const sessionId = uuidv4();
     const startedAt = new Date().toISOString();
 
+    const provider = llm_provider || config.DEFAULT_LLM_PROVIDER;
+    const model = llm_model || config.DEFAULT_LLM_MODEL;
+
     // Create session record
     await db.run(
       `INSERT INTO sessions 
-        (id, user_id, topic, difficulty, duration_minutes, status, integrity_score, total_questions, started_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, user_id, topic, difficulty, duration_minutes, status, integrity_score, total_questions, started_at, llm_provider, llm_model) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         sessionId,
         req.userId,
@@ -45,12 +48,14 @@ router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
         'active',
         100,
         total_questions || 10,
-        startedAt
+        startedAt,
+        provider,
+        model
       ]
     );
 
     // Generate first question
-    const firstQuestion = await generateFirstQuestion(topic, difficulty || 'medium');
+    const firstQuestion = await generateFirstQuestion(topic, difficulty || 'medium', provider, model, req.user);
 
     // Create first exchange record (index 1)
     const exchangeId = uuidv4();
@@ -194,7 +199,7 @@ router.post('/:id/calibration/submit', requireAuth, upload.single('audio'), asyn
     fs.renameSync(req.file.path, permanentPath);
 
     // Transcribe and analyze speech
-    const transcriptionResult = await transcribeAudio(permanentPath);
+    const transcriptionResult = await transcribeAudio(permanentPath, req.user);
     const speechAnalysis = analyzeSpeech(
       transcriptionResult.word_timestamps,
       transcriptionResult.transcript

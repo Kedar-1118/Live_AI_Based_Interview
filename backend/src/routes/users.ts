@@ -7,7 +7,76 @@ const router = Router();
 
 // GET /users/me
 router.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
-  return res.json(req.user);
+  const user = { ...req.user };
+  
+  const maskKey = (key?: string | null) => {
+    if (!key) return null;
+    if (key.length <= 8) return '********';
+    return `${key.slice(0, 4)}...${key.slice(-4)}`;
+  };
+
+  return res.json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    openai_api_key: maskKey(user.openai_api_key),
+    anthropic_api_key: maskKey(user.anthropic_api_key),
+    gemini_api_key: maskKey(user.gemini_api_key),
+    groq_api_key: maskKey(user.groq_api_key),
+    system_key_usage_count: user.system_key_usage_count
+  });
+});
+
+// PATCH /users/me/api-keys
+router.patch('/me/api-keys', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { openai_api_key, anthropic_api_key, gemini_api_key, groq_api_key } = req.body;
+  const db = getDb();
+
+  try {
+    const valOrNull = (val: any) => {
+      if (val === undefined) return undefined;
+      if (val === null || String(val).trim() === '') return null;
+      return String(val).trim();
+    };
+
+    const openAIVal = valOrNull(openai_api_key);
+    const anthropicVal = valOrNull(anthropic_api_key);
+    const geminiVal = valOrNull(gemini_api_key);
+    const groqVal = valOrNull(groq_api_key);
+
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (openAIVal !== undefined) {
+      updates.push('openai_api_key = ?');
+      params.push(openAIVal);
+    }
+    if (anthropicVal !== undefined) {
+      updates.push('anthropic_api_key = ?');
+      params.push(anthropicVal);
+    }
+    if (geminiVal !== undefined) {
+      updates.push('gemini_api_key = ?');
+      params.push(geminiVal);
+    }
+    if (groqVal !== undefined) {
+      updates.push('groq_api_key = ?');
+      params.push(groqVal);
+    }
+
+    if (updates.length > 0) {
+      params.push(req.userId);
+      await db.run(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
+    }
+
+    return res.json({ status: 'success', message: 'API keys updated successfully' });
+  } catch (error) {
+    console.error('Error updating keys:', error);
+    return res.status(500).json({ detail: 'Failed to update API keys' });
+  }
 });
 
 // GET /users/me/dashboard

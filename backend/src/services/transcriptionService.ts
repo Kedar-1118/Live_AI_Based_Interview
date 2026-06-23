@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import fs from 'fs';
-import { config } from '../config';
+import { checkAndGetApiKey } from './aiProvider';
 
 export interface WordTimestamp {
   word: string;
@@ -16,16 +16,32 @@ export class TranscriptionResult {
   ) {}
 }
 
-export async function transcribeAudio(audioPath: string, maxRetries: number = 2): Promise<TranscriptionResult> {
-  const isMock = !config.OPENAI_API_KEY || config.OPENAI_API_KEY === 'your-openai-api-key-here';
+export async function transcribeAudio(
+  audioPath: string,
+  user: any,
+  maxRetries: number = 2
+): Promise<TranscriptionResult> {
+  let apiKey = '';
+  try {
+    apiKey = await checkAndGetApiKey(user.id, 'openai', user);
+  } catch (err: any) {
+    console.error('Failed to authenticate transcription key:', err);
+    // If the error was a limit exceeded error, we should bubble it up
+    if (err.status === 402) {
+      throw err;
+    }
+    return mockTranscribe(audioPath);
+  }
+
+  const isMock = apiKey === 'mock';
 
   if (isMock) {
-    console.log('No OpenAI API key configured — using mock transcription');
+    console.log('Using mock transcription');
     return mockTranscribe(audioPath);
   }
 
   try {
-    const openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
+    const openai = new OpenAI({ apiKey });
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -42,7 +58,7 @@ export async function transcribeAudio(audioPath: string, maxRetries: number = 2)
 
         if (response.words && Array.isArray(response.words)) {
           for (const w of response.words) {
-            word_timestamps.append ? null : word_timestamps.push({
+            word_timestamps.push({
               word: w.word || '',
               start: Number(w.start || 0),
               end: Number(w.end || 0),
@@ -69,7 +85,7 @@ export async function transcribeAudio(audioPath: string, maxRetries: number = 2)
       }
     }
   } catch (err) {
-    console.error('Transcription service configuration/startup error:', err);
+    console.error('Transcription service error:', err);
     return mockTranscribe(audioPath);
   }
 
@@ -107,21 +123,19 @@ function mockTranscribe(audioPath: string): TranscriptionResult {
     'might prioritize availability.',
   ];
 
-  // Pick a random answer
   const randomIndex = Math.floor(Math.random() * mockAnswers.length);
   const transcript = mockAnswers[randomIndex];
   const words = transcript.split(/\s+/);
 
   const word_timestamps: WordTimestamp[] = [];
-  let currentTime = 0.3; // small initial delay
+  let currentTime = 0.3;
 
   for (const word of words) {
-    const wordDuration = 0.15 + Math.random() * 0.3; // between 0.15s and 0.45s
-    let pause = 0.05 + Math.random() * 0.2; // between 0.05s and 0.25s
+    const wordDuration = 0.15 + Math.random() * 0.3;
+    let pause = 0.05 + Math.random() * 0.2;
 
-    // Occasional longer pauses at punctuation marks
     if (word.endsWith('.') || word.endsWith(',')) {
-      pause += 0.2 + Math.random() * 0.6; // extra 0.2s - 0.8s
+      pause += 0.2 + Math.random() * 0.6;
     }
 
     const start = currentTime;

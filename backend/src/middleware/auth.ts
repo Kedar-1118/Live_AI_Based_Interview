@@ -8,6 +8,11 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     name: string | null;
+    openai_api_key?: string | null;
+    anthropic_api_key?: string | null;
+    gemini_api_key?: string | null;
+    groq_api_key?: string | null;
+    system_key_usage_count: number;
   };
 }
 
@@ -26,7 +31,10 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
 
   try {
     const db = getDb();
-    const user = await db.get('SELECT id, email, name FROM users WHERE id = ?', [payload.sub]);
+    const user = await db.get(
+      'SELECT id, email, name, openai_api_key, anthropic_api_key, gemini_api_key, groq_api_key, system_key_usage_count FROM users WHERE id = ?',
+      [payload.sub]
+    );
     if (!user) {
       return res.status(401).json({ detail: 'User not found' });
     }

@@ -104,6 +104,28 @@ export async function initDb() {
   `);
 
   console.log('SQLite database tables initialized successfully.');
+
+  // Migrate sessions table if columns do not exist
+  const sessionInfo = await db.all("PRAGMA table_info(sessions)");
+  const hasProvider = sessionInfo.some(col => col.name === 'llm_provider');
+  if (!hasProvider) {
+    await db.run("ALTER TABLE sessions ADD COLUMN llm_provider TEXT DEFAULT 'anthropic'");
+    await db.run("ALTER TABLE sessions ADD COLUMN llm_model TEXT DEFAULT 'claude-sonnet-4-20250514'");
+    console.log("Sessions table migrated with llm_provider and llm_model columns.");
+  }
+
+  // Migrate users table if columns do not exist
+  const userInfo = await db.all("PRAGMA table_info(users)");
+  const hasUserKeys = userInfo.some(col => col.name === 'openai_api_key');
+  if (!hasUserKeys) {
+    await db.run("ALTER TABLE users ADD COLUMN openai_api_key TEXT");
+    await db.run("ALTER TABLE users ADD COLUMN anthropic_api_key TEXT");
+    await db.run("ALTER TABLE users ADD COLUMN gemini_api_key TEXT");
+    await db.run("ALTER TABLE users ADD COLUMN groq_api_key TEXT");
+    await db.run("ALTER TABLE users ADD COLUMN system_key_usage_count INTEGER DEFAULT 0");
+    console.log("Users table migrated with personal API key columns and usage counter.");
+  }
+
   return db;
 }
 

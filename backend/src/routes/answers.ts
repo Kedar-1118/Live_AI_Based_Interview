@@ -26,12 +26,16 @@ const upload = multer({
 async function processEvaluationAndNextQuestion(
   session: any,
   currentExchange: any,
-  transcript: string
+  transcript: string,
+  user: any
 ): Promise<{ evaluation: EvaluationResult; nextQuestionText: string | null; sessionComplete: boolean }> {
   const db = getDb();
 
+  const provider = session.llm_provider || 'anthropic';
+  const model = session.llm_model || 'claude-sonnet-4-20250514';
+
   // 1. Run technical evaluation
-  const evaluation = await evaluateAnswer(currentExchange.question, transcript, session.topic);
+  const evaluation = await evaluateAnswer(currentExchange.question, transcript, session.topic, provider, model, user);
 
   // 2. Insert core Score record
   const scoreId = uuidv4();
@@ -53,9 +57,7 @@ async function processEvaluationAndNextQuestion(
   );
 
   // 3. Vector memory storage and weak topic tracking in "background" (non-blocking)
-  // We can let these execute asynchronously without awaiting them directly in the response path,
-  // but we still launch them immediately.
-  embedAndStoreExchange(currentExchange.id, currentExchange.question, transcript)
+  embedAndStoreExchange(currentExchange.id, currentExchange.question, transcript, user)
     .catch(err => console.error('Background embedding storage failed:', err));
 
   updateWeakTopics(session.user_id, session.topic, evaluation)
@@ -90,7 +92,7 @@ async function processEvaluationAndNextQuestion(
     // Retrieve weak answers from memory
     let retrievedContext = '';
     try {
-      const weakAnswers = await retrieveRelevantWeakAnswers(session.user_id, currentExchange.question);
+      const weakAnswers = await retrieveRelevantWeakAnswers(session.user_id, currentExchange.question, user);
       retrievedContext = formatRetrievedContext(weakAnswers);
     } catch (err) {
       console.warn('Memory retrieval failed (non-critical):', err);
@@ -104,7 +106,10 @@ async function processEvaluationAndNextQuestion(
       nextIndex,
       session.total_questions,
       performanceSummary,
-      retrievedContext
+      retrievedContext,
+      provider,
+      model,
+      user
     );
 
     // Create next exchange
@@ -174,7 +179,8 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res: Response) => {
     const { evaluation, nextQuestionText, sessionComplete } = await processEvaluationAndNextQuestion(
       session,
       currentExchange,
-      answer_text
+      answer_text,
+      req.user
     );
 
     return res.json({
@@ -235,7 +241,7 @@ router.post('/submit-audio', requireAuth, upload.single('audio'), async (req: Au
     console.log(`Audio saved: ${audioPath} (${req.file.size} bytes)`);
 
     // ─── Parallel Processing Pipeline ───
-    const transcriptionResult = await transcribeAudio(audioPath);
+    const transcriptionResult = await transcribeAudio(audioPath, req.user);
 
     const speechAnalysis = analyzeSpeech(
       transcriptionResult.word_timestamps,
@@ -270,7 +276,8 @@ router.post('/submit-audio', requireAuth, upload.single('audio'), async (req: Au
     const { evaluation, nextQuestionText, sessionComplete } = await processEvaluationAndNextQuestion(
       session,
       currentExchange,
-      transcriptionResult.transcript
+      transcriptionResult.transcript,
+      req.user
     );
 
     // Save speech stats into score record

@@ -31,13 +31,37 @@ async function runTests() {
   
   const headers = { Authorization: `Bearer ${token}` };
 
+  // 1b. Configure Personal API keys
+  console.log('\n=== 1b. CONFIGURE PERSONAL API KEYS ===');
+  const keyRes = await client.patch('/users/me/api-keys', {
+    openai_api_key: 'sk-personal-openai-key-1234',
+    anthropic_api_key: 'sk-personal-anthropic-key-5678'
+  }, { headers });
+  console.log(`Status: ${keyRes.status}`);
+  if (keyRes.status !== 200) {
+    console.error('Configuring keys failed!', keyRes.data);
+    process.exit(1);
+  }
+
+  // Verify key masking on GET /users/me
+  const profileRes = await client.get('/users/me', { headers });
+  console.log('GET /users/me keys output (should be masked):');
+  console.log(`  openai_api_key: ${profileRes.data.openai_api_key}`);
+  console.log(`  anthropic_api_key: ${profileRes.data.anthropic_api_key}`);
+  if (profileRes.data.openai_api_key !== 'sk-p...1234') {
+    console.error('Key masking validation failed!');
+    process.exit(1);
+  }
+
   // 2. Create Session
   console.log('\n=== 2. CREATE SESSION ===');
   const sessRes = await client.post('/sessions/create', {
     topic: 'Machine Learning',
     difficulty: 'medium',
     duration_minutes: 30,
-    total_questions: 5
+    total_questions: 5,
+    llm_provider: 'mock',
+    llm_model: 'mock'
   }, { headers });
   console.log(`Status: ${sessRes.status}`);
   if (sessRes.status !== 201) {

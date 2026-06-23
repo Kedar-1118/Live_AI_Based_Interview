@@ -1,18 +1,29 @@
 import { OpenAI } from 'openai';
 import { getDb } from '../db';
-import { config } from '../config';
+import { checkAndGetApiKey } from './aiProvider';
 
 const EMBEDDING_DIM = 1536;
 
-export async function embedText(text: string): Promise<number[]> {
-  const isMock = !config.OPENAI_API_KEY || config.OPENAI_API_KEY === 'your-openai-api-key-here';
+export async function embedText(text: string, user: any): Promise<number[]> {
+  let apiKey = '';
+  try {
+    apiKey = await checkAndGetApiKey(user.id, 'openai', user);
+  } catch (err: any) {
+    console.error('Failed to authenticate embedding key:', err);
+    if (err.status === 402) {
+      throw err;
+    }
+    return mockEmbedding(text);
+  }
+
+  const isMock = apiKey === 'mock';
 
   if (isMock) {
     return mockEmbedding(text);
   }
 
   try {
-    const openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
+    const openai = new OpenAI({ apiKey });
     const response = await openai.embeddings.create({
       input: text,
       model: 'text-embedding-3-small',
@@ -49,7 +60,6 @@ function mockEmbedding(text: string): number[] {
     let u2 = rand();
     if (u1 === 0) u1 = 0.0001; // Avoid log(0)
 
-    // Box-Muller transform for normal distribution
     const r = Math.sqrt(-2.0 * Math.log(u1));
     const theta = 2.0 * Math.PI * u2;
 
@@ -80,11 +90,12 @@ function mockEmbedding(text: string): number[] {
 export async function embedAndStoreExchange(
   exchangeId: string,
   question: string,
-  answer: string
+  answer: string,
+  user: any
 ): Promise<void> {
   try {
     const content = `Q: ${question}\nA: ${answer}`;
-    const embedding = await embedText(content);
+    const embedding = await embedText(content, user);
 
     const db = getDb();
     await db.run(
@@ -125,12 +136,13 @@ export interface RetrievedWeakAnswer {
 export async function retrieveRelevantWeakAnswers(
   userId: string,
   currentQuestion: string,
+  user: any,
   topK: number = 3,
   maxScoreThreshold: number = 7,
   matchThreshold: number = 0.3
 ): Promise<RetrievedWeakAnswer[]> {
   try {
-    const queryEmbedding = await embedText(currentQuestion);
+    const queryEmbedding = await embedText(currentQuestion, user);
     const db = getDb();
 
     // Load past exchanges with embeddings that had weak scores

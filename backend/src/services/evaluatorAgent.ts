@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { config } from '../config';
+import { generateChatCompletion, checkAndGetApiKey } from './aiProvider';
 
 export interface EvaluationResult {
   technical_accuracy: number;
@@ -37,36 +36,38 @@ export async function evaluateAnswer(
   question: string,
   transcript: string,
   topic: string,
+  provider: string,
+  model: string,
+  user: any,
   maxRetries: number = 2
 ): Promise<EvaluationResult> {
-  const isMock = !config.ANTHROPIC_API_KEY || config.ANTHROPIC_API_KEY === 'your-anthropic-api-key-here';
+  const normalizedProvider = provider.toLowerCase();
 
-  if (isMock) {
-    console.log('No Anthropic API key configured — using mock evaluator');
+  if (normalizedProvider === 'mock') {
     return mockEvaluate(question, transcript, topic);
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
-    const prompt = EVALUATOR_SYSTEM_PROMPT
+    const apiKey = await checkAndGetApiKey(user.id, provider, user);
+    
+    const formattedPrompt = EVALUATOR_SYSTEM_PROMPT
       .replace('{question}', question)
       .replace('{topic}', topic)
       .replace('{transcript}', transcript);
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        const response = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 500,
-          messages: [{ role: 'user', content: prompt }],
-        });
+        let raw = await generateChatCompletion(
+          provider,
+          model,
+          {
+            userPrompt: formattedPrompt,
+            jsonMode: true,
+          },
+          apiKey
+        );
 
-        let raw = '';
-        if (response.content && response.content[0] && response.content[0].type === 'text') {
-          raw = response.content[0].text.trim();
-        } else {
-          throw new Error('Invalid response content type from Anthropic');
-        }
+        raw = raw.trim();
 
         // Clean markdown code blocks if wrapped
         if (raw.startsWith('```')) {
@@ -88,8 +89,12 @@ export async function evaluateAnswer(
         }
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Evaluator agent error:', err);
+    // If the error was a limit exceeded error, we should bubble it up
+    if (err.status === 402) {
+      throw err;
+    }
     return mockEvaluate(question, transcript, topic);
   }
 

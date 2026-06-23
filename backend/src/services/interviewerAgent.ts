@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { config } from '../config';
+import { generateChatCompletion, checkAndGetApiKey } from './aiProvider';
 import { EvaluationResult } from './evaluatorAgent';
 
 const INTERVIEWER_SYSTEM_PROMPT = `You are an experienced technical interviewer conducting a {topic} interview at {difficulty} level.
@@ -92,39 +91,44 @@ function getMockQuestion(topic: string, index: number): string {
   if (index >= 0 && index < questions.length) {
     return questions[index];
   }
-  // fallback: pick a random one
   const randomIndex = Math.floor(Math.random() * questions.length);
   return questions[randomIndex];
 }
 
-export async function generateFirstQuestion(topic: string, difficulty: string): Promise<string> {
-  const isMock = !config.ANTHROPIC_API_KEY || config.ANTHROPIC_API_KEY === 'your-anthropic-api-key-here';
+export async function generateFirstQuestion(
+  topic: string,
+  difficulty: string,
+  provider: string,
+  model: string,
+  user: any
+): Promise<string> {
+  const normalizedProvider = provider.toLowerCase();
 
-  if (isMock) {
-    console.log('No Anthropic API key — using mock questions');
+  if (normalizedProvider === 'mock') {
     return getMockQuestion(topic, 0);
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+    const apiKey = await checkAndGetApiKey(user.id, provider, user);
     const prompt = `You are an experienced technical interviewer starting a ${topic} interview at ${difficulty} level.
 
 Generate the first question for the interview. It should be an opening question appropriate for the ${difficulty} level.
 
 Respond with ONLY the question. No preamble. No explanation.`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    if (response.content && response.content[0] && response.content[0].type === 'text') {
-      return response.content[0].text.trim();
-    }
-    return getMockQuestion(topic, 0);
-  } catch (err) {
+    const text = await generateChatCompletion(
+      provider,
+      model,
+      { userPrompt: prompt },
+      apiKey
+    );
+    
+    return text.trim();
+  } catch (err: any) {
     console.error('Error generating first question:', err);
+    if (err.status === 402) {
+      throw err;
+    }
     return getMockQuestion(topic, 0);
   }
 }
@@ -136,17 +140,19 @@ export async function generateNextQuestion(
   questionIndex: number,
   totalQuestions: number,
   performanceSummary: string,
-  retrievedContext: string = ''
+  retrievedContext: string = '',
+  provider: string,
+  model: string,
+  user: any
 ): Promise<string> {
-  const isMock = !config.ANTHROPIC_API_KEY || config.ANTHROPIC_API_KEY === 'your-anthropic-api-key-here';
+  const normalizedProvider = provider.toLowerCase();
 
-  if (isMock) {
-    console.log('No Anthropic API key — using mock questions');
+  if (normalizedProvider === 'mock') {
     return getMockQuestion(topic, questionIndex - 1);
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+    const apiKey = await checkAndGetApiKey(user.id, provider, user);
 
     const contextParts: string[] = [];
     if (evaluation.follow_up_angle) {
@@ -156,7 +162,6 @@ export async function generateNextQuestion(
       contextParts.push(`Prior weak answers retrieved from memory:\n${retrievedContext}`);
     }
 
-    // Adaptive mode decision based on accuracy score
     const score = evaluation.technical_accuracy;
     if (score >= 8) {
       contextParts.push('The candidate answered strongly. Move to a new, slightly harder topic.');
@@ -182,18 +187,19 @@ export async function generateNextQuestion(
       .replace('{performance_summary}', performanceSummary)
       .replace('{context_section}', contextSection);
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const text = await generateChatCompletion(
+      provider,
+      model,
+      { userPrompt: prompt },
+      apiKey
+    );
 
-    if (response.content && response.content[0] && response.content[0].type === 'text') {
-      return response.content[0].text.trim();
-    }
-    return getMockQuestion(topic, questionIndex - 1);
-  } catch (err) {
+    return text.trim();
+  } catch (err: any) {
     console.error('Error generating next question:', err);
+    if (err.status === 402) {
+      throw err;
+    }
     return getMockQuestion(topic, questionIndex - 1);
   }
 }
