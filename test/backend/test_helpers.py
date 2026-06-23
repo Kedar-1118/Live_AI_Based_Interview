@@ -18,8 +18,8 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# 2. SQLite In-Memory Database for Testing
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# 2. SQLite In-Memory Database for Testing (Shared Cache for concurrent route connections)
+TEST_DATABASE_URL = "sqlite+aiosqlite:///file:testdb?mode=memory&cache=shared&uri=true"
 
 engine = create_async_engine(
     TEST_DATABASE_URL,
