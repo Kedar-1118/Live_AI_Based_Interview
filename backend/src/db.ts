@@ -4,9 +4,10 @@ import path from 'path';
 
 let db: Database;
 
-export async function initDb() {
+export async function initDb(dbPath?: string) {
+  const filename = dbPath || path.resolve(__dirname, '..', 'interview.db');
   db = await open({
-    filename: path.resolve(__dirname, '..', 'interview.db'),
+    filename,
     driver: sqlite3.Database
   });
 
