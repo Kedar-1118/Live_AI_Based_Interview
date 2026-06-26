@@ -228,9 +228,8 @@ function studentTCDF(t: number, df: number): number {
   if (df === 1) {
     return 0.5 + Math.atan(t) / Math.PI;
   }
-  // Normal approximation
-  const x = t / Math.sqrt(df);
-  const z = (x * (1 - 1 / (4 * df))) / Math.sqrt(1 + (x * x) / 2);
+  // Normal approximation (Wallace 1959)
+  const z = (t * (1 - 1 / (4 * df))) / Math.sqrt(1 + (t * t) / (2 * df));
   return normalCDF(z);
 }
 
@@ -292,7 +291,18 @@ export async function computeGazeFluencyCorrelation(
   }
 
   // Determine starting epoch of the audio
-  let audioStartMs = new Date(exchange.created_at + ' Z').getTime(); // Try UTC conversion
+  let dateStr = exchange.created_at;
+  if (typeof dateStr === 'string') {
+    let normalized = dateStr.trim();
+    if (normalized.includes(' ')) {
+      normalized = normalized.replace(' ', 'T');
+    }
+    if (!normalized.endsWith('Z') && !normalized.includes('+') && !normalized.slice(-6).includes('-')) {
+      normalized = normalized + 'Z';
+    }
+    dateStr = normalized;
+  }
+  let audioStartMs = new Date(dateStr).getTime();
 
   if (events.length > 0) {
     const oldestEventMs = Math.min(...events.map(e => Number(e.timestamp_ms)));

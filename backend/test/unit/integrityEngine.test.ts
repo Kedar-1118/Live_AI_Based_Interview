@@ -107,11 +107,13 @@ describe('IntegrityEngine Unit Tests', () => {
   test('computeGazeFluencyCorrelation positive correlation', async () => {
     const db = getDb();
     const startedAt = new Date().toISOString();
-    const audioStart = new Date(startedAt + ' Z').getTime();
+    const audioStart = new Date(startedAt).getTime();
 
     // Log gaze deviation events in DB
     const id1 = uuidv4();
     const id2 = uuidv4();
+    const id3 = uuidv4();
+    const id4 = uuidv4();
     await db.run(
       'INSERT INTO integrity_events (id, session_id, exchange_id, event_type, severity, timestamp_ms) VALUES (?, ?, ?, ?, ?, ?)',
       [id1, session.id, exchangeId, 'gaze_deviation', 'low', audioStart + 1000]
@@ -120,20 +122,26 @@ describe('IntegrityEngine Unit Tests', () => {
       'INSERT INTO integrity_events (id, session_id, exchange_id, event_type, severity, timestamp_ms) VALUES (?, ?, ?, ?, ?, ?)',
       [id2, session.id, exchangeId, 'gaze_deviation', 'low', audioStart + 7000]
     );
+    await db.run(
+      'INSERT INTO integrity_events (id, session_id, exchange_id, event_type, severity, timestamp_ms) VALUES (?, ?, ?, ?, ?, ?)',
+      [id3, session.id, exchangeId, 'gaze_deviation', 'low', audioStart + 14000]
+    );
+    await db.run(
+      'INSERT INTO integrity_events (id, session_id, exchange_id, event_type, severity, timestamp_ms) VALUES (?, ?, ?, ?, ?, ?)',
+      [id4, session.id, exchangeId, 'gaze_deviation', 'low', audioStart + 21000]
+    );
 
-    // Create WPM segments
+    // Create WPM segments (160-175 for gaze-deviating periods, 95-110 for non-deviating)
     const wpmSegs: WPMSegment[] = [
       { start: 3.0, end: 4.0, wpm: 160.0, word_count: 10 },
       { start: 10.0, end: 11.0, wpm: 170.0, word_count: 10 },
-      { start: 25.0, end: 26.0, wpm: 100.0, word_count: 10 },
+      { start: 17.0, end: 18.0, wpm: 165.0, word_count: 10 },
+      { start: 24.0, end: 25.0, wpm: 175.0, word_count: 10 },
+      { start: 31.0, end: 32.0, wpm: 100.0, word_count: 10 },
+      { start: 38.0, end: 39.0, wpm: 110.0, word_count: 10 },
+      { start: 45.0, end: 46.0, wpm: 105.0, word_count: 10 },
+      { start: 52.0, end: 53.0, wpm: 95.0, word_count: 10 },
     ];
-
-    // Gaze events (1 inside window [3-5s, i.e. 0-3s], 1 inside window [10-5s, i.e. 5-10s])
-    // Segment 1 start is 3.0s (3000ms). Preceding window is [-2000ms, 3000ms]. Event at +1000ms matches.
-    // Segment 2 start is 10.0s (10000ms). Preceding window is [5000ms, 10000ms]. Event at +7000ms matches.
-    // Segment 3 start is 25.0s (25000ms). Preceding window is [20000ms, 25000ms]. No events.
-    // deviationPresence: [1, 1, 0]
-    // fluencyValues: [160, 170, 100]
 
     const correlation = await computeGazeFluencyCorrelation(session.id, exchangeId, wpmSegs);
 
