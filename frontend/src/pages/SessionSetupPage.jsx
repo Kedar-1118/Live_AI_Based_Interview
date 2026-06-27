@@ -123,6 +123,11 @@ export default function SessionSetupPage() {
 
         {/* Start Button */}
         <div className="setup-actions animate-fade-in" style={{ animationDelay: '0.25s' }}>
+          {!topic && (
+            <p className="setup-prompt-message" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px' }}>
+              💡 Please select a topic above to start the interview.
+            </p>
+          )}
           {error && (
             <div className="auth-error" style={{ marginBottom: '16px' }}>
               {error}
@@ -133,6 +138,7 @@ export default function SessionSetupPage() {
             onClick={handleStart}
             disabled={!topic || isLoading}
             id="btn-start-interview"
+            style={!topic ? { opacity: 0.5, cursor: 'not-allowed', transform: 'none', boxShadow: 'none' } : {}}
           >
             {isLoading ? (
               <>

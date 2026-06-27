@@ -51,6 +51,7 @@ export default function InterviewRoom() {
     startCalibration,
     submitCalibrationAudio,
     completeCalibration,
+    skipCalibrationAndSetupDefaultBaseline,
     integrityScore,
     isProctoringActive,
     setProctoringActive,

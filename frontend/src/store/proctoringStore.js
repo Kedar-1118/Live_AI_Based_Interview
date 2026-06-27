@@ -162,6 +162,41 @@ const useProctoringStore = create((set, get) => ({
     }
   },
 
+  skipCalibrationAndSetupDefaultBaseline: async (sessionId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const defaultBaselineData = {
+        avg_wpm: 140.0,
+        wpm_std_dev: 15.0,
+        gaze_center_x: 0.5,
+        gaze_center_y: 0.5,
+        gaze_std_dev: 0.08,
+        head_pose_range: {
+          yaw: [-15.0, 15.0],
+          pitch: [-15.0, 15.0],
+        },
+      };
+
+      await sessionAPI.completeCalibration(sessionId, defaultBaselineData);
+
+      const baselineResponse = await sessionAPI.getBaseline(sessionId);
+
+      set({
+        baseline: baselineResponse.data,
+        isCalibrated: true,
+        isProctoringActive: true,
+        isLoading: false,
+      });
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      const msg = err.response?.data?.detail || 'Failed to skip calibration';
+      set({ error: msg, isLoading: false });
+      return false;
+    }
+  },
+
   setProctoringActive: (active) => set({ isProctoringActive: active }),
   setIntegrityScore: (score) => set({ integrityScore: score }),
 
