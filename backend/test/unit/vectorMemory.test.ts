@@ -8,6 +8,34 @@ import {
 } from '../../src/services/vectorMemory';
 import { v4 as uuidv4 } from 'uuid';
 
+jest.mock('openai', () => {
+  class MockOpenAI {
+    embeddings = {
+      create: jest.fn().mockImplementation(async (params: any) => {
+        const input = params.input;
+        if (input.includes('overfitting')) {
+          const vec = new Array(1536).fill(0);
+          vec[0] = 1.0;
+          return { data: [{ embedding: vec }] };
+        }
+        if (input.includes('linear regression')) {
+          const vec = new Array(1536).fill(0);
+          vec[1] = 1.0;
+          return { data: [{ embedding: vec }] };
+        }
+        if (input.includes('explain overfitting')) {
+          const vec = new Array(1536).fill(0);
+          vec[0] = 0.99;
+          vec[1] = 0.01;
+          return { data: [{ embedding: vec }] };
+        }
+        return { data: [{ embedding: new Array(1536).fill(0) }] };
+      })
+    };
+  }
+  return { OpenAI: MockOpenAI };
+});
+
 describe('VectorMemory Unit Tests', () => {
   let user: any;
   let session: any;
@@ -91,8 +119,8 @@ describe('VectorMemory Unit Tests', () => {
       [scoreId2, exId2, 5, 'Explain cost function']
     );
 
-    // Embed them
-    const mockUserObj = { id: user.id, openai_api_key: 'mock' };
+    // Embed them with sk-test-key to trigger OpenAI mock
+    const mockUserObj = { id: user.id, openai_api_key: 'sk-test-key' };
     await embedAndStoreExchange(exId1, 'What is overfitting?', 'It is when model is too complex.', mockUserObj);
     await embedAndStoreExchange(exId2, 'What is linear regression?', 'A linear model to predict value.', mockUserObj);
 
@@ -103,7 +131,7 @@ describe('VectorMemory Unit Tests', () => {
       mockUserObj,
       3,
       7,
-      0.1 // low threshold for mock
+      0.3
     );
 
     expect(results.length).toBeGreaterThan(0);
