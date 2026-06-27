@@ -186,6 +186,17 @@ export default function InterviewRoom() {
                 {calibrationError}
               </div>
             )}
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
+              <button
+                onClick={() => skipCalibrationAndSetupDefaultBaseline(sessionId)}
+                className="btn btn-ghost btn-sm"
+                style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '8px 16px' }}
+                id="btn-skip-calibration"
+              >
+                ⏩ Skip Calibration & Use Defaults
+              </button>
+            </div>
           </div>
         </div>
 

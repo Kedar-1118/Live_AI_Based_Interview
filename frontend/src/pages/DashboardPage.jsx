@@ -161,49 +161,73 @@ export default function DashboardPage() {
           {dashboard?.recent_sessions?.length > 0 ? (
             <div className="sessions-list">
               {dashboard.recent_sessions.map((session, index) => (
-                <div
+                <Link
                   key={session.id}
-                  className="session-card glass-card animate-slide-in"
-                  style={{ animationDelay: `${0.05 * index}s` }}
+                  to={`/session/${session.id}`}
+                  className="session-card-link"
+                  style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
                 >
-                  <div className="session-card-left">
-                    <h3 className="session-topic">{session.topic}</h3>
-                    <div className="session-meta">
-                      <span className={getDifficultyBadge(session.difficulty)}>
-                        {session.difficulty}
-                      </span>
-                      <span className={getStatusBadge(session.status)}>
-                        {session.status}
-                      </span>
-                      <span className="session-date">
-                        {new Date(session.started_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="session-card-right">
-                    <div className="session-progress">
-                      <span className="session-progress-label">
-                        {session.questions_answered}/{session.total_questions} answered
-                      </span>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${(session.questions_answered / session.total_questions) * 100}%`
-                          }}
-                        />
+                  <div
+                    className="session-card glass-card animate-slide-in"
+                    style={{ animationDelay: `${0.05 * index}s`, cursor: 'pointer' }}
+                  >
+                    <div className="session-card-left">
+                      <h3 className="session-topic">{session.topic}</h3>
+                      <div className="session-meta">
+                        <span className={getDifficultyBadge(session.difficulty)}>
+                          {session.difficulty}
+                        </span>
+                        <span className={getStatusBadge(session.status)}>
+                          {session.status}
+                        </span>
+                        <span className="session-date">
+                          {new Date(session.started_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
-                    {session.avg_score !== null && (
-                      <div className={`score-circle ${
-                        session.avg_score >= 7 ? 'score-high' :
-                        session.avg_score >= 5 ? 'score-mid' : 'score-low'
-                      }`}>
-                        {session.avg_score.toFixed(0)}
+                    <div className="session-card-right">
+                      <div className="session-progress">
+                        <span className="session-progress-label">
+                          {session.questions_answered}/{session.total_questions} answered
+                        </span>
+                        <div className="progress-bar">
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: `${(session.questions_answered / session.total_questions) * 100}%`
+                            }}
+                          />
+                        </div>
                       </div>
-                    )}
+                      {session.avg_score !== null && (
+                        <div className={`score-circle ${
+                          session.avg_score >= 7 ? 'score-high' :
+                          session.avg_score >= 5 ? 'score-mid' : 'score-low'
+                        }`}>
+                          {session.avg_score.toFixed(0)}
+                        </div>
+                      )}
+                      
+                      <div className="session-action-indicator" style={{ marginLeft: '8px' }}>
+                        {session.status === 'active' ? (
+                          <span style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: '600' }}>
+                            Resume
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M4.5 9L7.5 6L4.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: '600' }}>
+                            Report
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M4.5 9L7.5 6L4.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
