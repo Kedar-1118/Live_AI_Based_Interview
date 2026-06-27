@@ -32,6 +32,16 @@ router.post('/register', async (req: Request, res: Response) => {
     );
 
     const accessToken = createAccessToken(userId);
+    const refreshToken = createRefreshToken(userId);
+
+    // Set refresh token cookie
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false, // Set true in production with HTTPS
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     const user = {
       id: userId,
       email,

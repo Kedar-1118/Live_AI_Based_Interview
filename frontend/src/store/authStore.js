@@ -65,6 +65,34 @@ const useAuthStore = create((set, get) => ({
     });
   },
 
+  checkAuth: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authAPI.refresh();
+      const { access_token, user } = response.data;
+
+      window.__AUTH_TOKEN__ = access_token;
+
+      set({
+        user,
+        token: access_token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      return true;
+    } catch (error) {
+      window.__AUTH_TOKEN__ = null;
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
   clearError: () => set({ error: null }),
 }));
 

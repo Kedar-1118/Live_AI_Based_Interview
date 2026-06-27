@@ -88,12 +88,12 @@ async function startServer() {
     });
 
     ws.on('close', () => {
-      wsManager.disconnect(sessionId);
+      wsManager.disconnect(sessionId, ws);
     });
 
     ws.on('error', (err) => {
       console.error(`WebSocket error in session ${sessionId}:`, err);
-      wsManager.disconnect(sessionId);
+      wsManager.disconnect(sessionId, ws);
     });
   });
 

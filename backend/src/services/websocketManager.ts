@@ -8,8 +8,8 @@ export class ConnectionManager {
     console.log(`WebSocket registered for session ${sessionId}`);
   }
 
-  public disconnect(sessionId: string) {
-    if (this.activeConnections.has(sessionId)) {
+  public disconnect(sessionId: string, websocket: WebSocket) {
+    if (this.activeConnections.get(sessionId) === websocket) {
       this.activeConnections.delete(sessionId);
       console.log(`WebSocket unregistered for session ${sessionId}`);
     }
