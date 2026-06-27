@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import Navbar from './components/Layout/Navbar';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -9,7 +10,22 @@ import InterviewRoom from './components/Interview/InterviewRoom';
 import useAuthStore from './store/authStore';
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, checkAuth } = useAuthStore();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    checkAuth().finally(() => {
+      setCheckingAuth(false);
+    });
+  }, [checkAuth]);
+
+  if (checkingAuth) {
+    return (
+      <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
