@@ -151,11 +151,12 @@ describe('WebSocket Integration Tests', () => {
     const db = getDb();
     // Add baseline to avoid early exit during processing
     const baselineId = '../../src/services/baselineId';
+    const capturedAt = new Date().toISOString();
     await db.run(
       `INSERT INTO baselines 
-        (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['baseline-123', session.id, 150.0, 15.0, 0.5, 0.5, 0.1, JSON.stringify({ yaw: [-10, 10], pitch: [-10, 10] })]
+        (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range, captured_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['baseline-123', session.id, 150.0, 15.0, 0.5, 0.5, 0.1, JSON.stringify({ yaw: [-10, 10], pitch: [-10, 10] }), capturedAt]
     );
 
     const ws = new WSClient(`ws://localhost:${port}/ws/${session.id}?token=${token}`);

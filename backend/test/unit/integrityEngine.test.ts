@@ -29,11 +29,12 @@ describe('IntegrityEngine Unit Tests', () => {
 
     // Create baseline
     const baselineId = uuidv4();
+    const capturedAt = new Date().toISOString();
     await db.run(
       `INSERT INTO baselines 
-        (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [baselineId, session.id, 150.0, 15.0, 0.5, 0.5, 0.1, JSON.stringify({ yaw: [-10, 10], pitch: [-10, 10] })]
+        (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range, captured_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [baselineId, session.id, 150.0, 15.0, 0.5, 0.5, 0.1, JSON.stringify({ yaw: [-10, 10], pitch: [-10, 10] }), capturedAt]
     );
   });
 
