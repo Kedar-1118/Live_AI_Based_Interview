@@ -41,7 +41,7 @@ redis_data/
 # Build outputs
 frontend/dist/
 backend/*.db
-
+backend/uploads
 # Alembic
 backend/app/db/migrations/versions/__pycache__/
 
