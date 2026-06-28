@@ -241,7 +241,7 @@ router.post('/submit-audio', requireAuth, upload.single('audio'), async (req: Au
     console.log(`Audio saved: ${audioPath} (${req.file.size} bytes)`);
 
     // ─── Parallel Processing Pipeline ───
-    const transcriptionResult = await transcribeAudio(audioPath, req.user);
+    const transcriptionResult = await transcribeAudio(audioPath, req.user, 2, session.llm_provider);
 
     const speechAnalysis = analyzeSpeech(
       transcriptionResult.word_timestamps,

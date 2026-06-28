@@ -19,17 +19,22 @@ export class TranscriptionResult {
 export async function transcribeAudio(
   audioPath: string,
   user: any,
-  maxRetries: number = 2
+  maxRetries: number = 2,
+  provider?: string
 ): Promise<TranscriptionResult> {
+  if (provider === 'mock') {
+    console.log('Provider is mock — using mock transcription directly');
+    return mockTranscribe(audioPath);
+  }
+
   let apiKey = '';
   try {
     apiKey = await checkAndGetApiKey(user.id, 'openai', user);
   } catch (err: any) {
-    console.error('Failed to authenticate transcription key:', err);
-    // If the error was a limit exceeded error, we should bubble it up
     if (err.status === 402) {
       throw err;
     }
+    console.warn(`Could not authenticate OpenAI transcription API key (${err.message}). Falling back to mock transcription.`);
     return mockTranscribe(audioPath);
   }
 

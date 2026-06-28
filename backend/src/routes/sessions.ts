@@ -199,7 +199,7 @@ router.post('/:id/calibration/submit', requireAuth, upload.single('audio'), asyn
     fs.renameSync(req.file.path, permanentPath);
 
     // Transcribe and analyze speech
-    const transcriptionResult = await transcribeAudio(permanentPath, req.user);
+    const transcriptionResult = await transcribeAudio(permanentPath, req.user, 2, session.llm_provider);
     const speechAnalysis = analyzeSpeech(
       transcriptionResult.word_timestamps,
       transcriptionResult.transcript
@@ -243,11 +243,12 @@ router.post('/:id/calibration/complete', requireAuth, async (req: AuthRequest, r
       );
     } else {
       const baselineId = uuidv4();
+      const capturedAt = new Date().toISOString();
       await db.run(
         `INSERT INTO baselines 
-          (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [baselineId, id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, headPoseJson]
+          (id, session_id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, head_pose_range, captured_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [baselineId, id, avg_wpm, wpm_std_dev, gaze_center_x, gaze_center_y, gaze_std_dev, headPoseJson, capturedAt]
       );
     }
 
