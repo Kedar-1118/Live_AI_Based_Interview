@@ -24,7 +24,7 @@ export const config = {
   APP_NAME: 'AI Interview Simulator',
   DEBUG: process.env.DEBUG !== 'false',
   PORT: parseInt(process.env.PORT || '8000', 10),
-  CORS_ORIGINS: ['http://localhost:5173', 'http://localhost:3000']
+  CORS_ORIGINS: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174']
 };
 
 export default config;
