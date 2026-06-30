@@ -45,20 +45,20 @@ export default function SessionSetupPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#030303] overflow-hidden">
-      {/* Background orbs */}
-      <div className="glow-bg-orb glow-purple" />
-      <div className="glow-bg-orb glow-blue" />
-
-      <div className="workspace-container md:pl-24 lg:pl-[240px]">
-        <main className="workspace-content max-w-4xl">
+    <div className="relative min-h-screen bg-[#030306] overflow-x-hidden w-full">
+      <div className="workspace-container md:pl-24 lg:pl-[260px] p-6 lg:p-10 relative z-10">
+        <main className="workspace-content max-w-4xl mx-auto space-y-8">
           
           {/* Header */}
-          <div className="mb-10 text-left">
+          <div className="pb-6 border-b border-white/[0.04]">
+            <div className="flex items-center gap-2 text-[10px] text-purple-400 font-mono tracking-widest uppercase mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 dot-blink" />
+              Configure System
+            </div>
             <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2">
-              Configure / <span className="text-gradient">Mock Sandbox</span>
+              Compile / <span className="text-cyber-gradient">Simulator Session</span>
             </h1>
-            <p className="text-zinc-400 text-sm">
+            <p className="text-zinc-400 text-xs font-mono">
               Adjust telemetry parameters and pick your target domain to initialize calibration.
             </p>
           </div>
@@ -67,13 +67,14 @@ export default function SessionSetupPage() {
             
             {/* Step 1: Select Topic */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="dev-glass rounded-2xl p-6 border border-white/5 shadow-lg"
+              className="cyber-card rounded-2xl p-6 border border-white/5 shadow-lg relative overflow-hidden"
             >
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-5 h-5 rounded bg-purple-500/10 text-purple-400 font-mono text-xs">1</span>
+              <div className="absolute top-0 left-0 w-20 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-5 flex items-center gap-2.5 font-mono">
+                <span className="flex items-center justify-center w-5 h-5 rounded bg-purple-500/10 text-purple-400 font-mono text-[10px] border border-purple-500/20">01</span>
                 Target Interview Domain
               </h2>
 
@@ -88,13 +89,13 @@ export default function SessionSetupPage() {
                       id={`topic-${t.id.toLowerCase().replace(' ', '-')}`}
                       className={`p-4 rounded-xl border cursor-pointer text-left transition-all ${
                         isSelected
-                          ? 'bg-[#8b5cf6]/5 border-[#8b5cf6] shadow-lg shadow-purple-500/5'
-                          : 'bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+                          ? 'bg-purple-950/15 border-purple-500/80 shadow-lg shadow-purple-500/5'
+                          : 'bg-zinc-950/60 border-white/5 hover:border-white/10 hover:bg-zinc-950'
                       }`}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`p-2.5 rounded-lg shrink-0 ${
-                          isSelected ? 'bg-[#8b5cf6]/20 text-[#a78bfa]' : 'bg-white/5 text-zinc-400'
+                        <div className={`p-2.5 rounded-lg shrink-0 border transition-colors ${
+                          isSelected ? 'bg-purple-500/15 text-purple-300 border-purple-500/30' : 'bg-zinc-900 text-zinc-400 border-white/5'
                         }`}>
                           <TopicIcon size={18} />
                         </div>
@@ -111,14 +112,15 @@ export default function SessionSetupPage() {
 
             {/* Step 2: Select Difficulty */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="dev-glass rounded-2xl p-6 border border-white/5 shadow-lg"
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="cyber-card rounded-2xl p-6 border border-white/5 shadow-lg relative overflow-hidden"
             >
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-5 h-5 rounded bg-purple-500/10 text-purple-400 font-mono text-xs">2</span>
-                Adaptive Complexity
+              <div className="absolute top-0 left-0 w-20 h-[1px] bg-gradient-to-r from-cyan-500 to-transparent" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-5 flex items-center gap-2.5 font-mono">
+                <span className="flex items-center justify-center w-5 h-5 rounded bg-cyan-500/10 text-cyan-400 font-mono text-[10px] border border-cyan-500/20">02</span>
+                Adaptive Complexity Level
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -131,13 +133,13 @@ export default function SessionSetupPage() {
                       id={`difficulty-${d.id}`}
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         isSelected
-                          ? 'bg-[#8b5cf6]/5 border-[#8b5cf6] shadow-lg shadow-purple-500/5'
-                          : 'bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+                          ? 'bg-cyan-950/15 border-cyan-500/80 shadow-lg shadow-cyan-500/5'
+                          : 'bg-zinc-950/60 border-white/5 hover:border-white/10 hover:bg-zinc-950'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`w-2 h-2 rounded-full ${
-                          d.id === 'easy' ? 'bg-emerald-500' : d.id === 'medium' ? 'bg-amber-500' : 'bg-red-500'
+                          d.id === 'easy' ? 'bg-emerald-500 shadow-md shadow-emerald-500/20' : d.id === 'medium' ? 'bg-amber-500 shadow-md shadow-amber-500/20' : 'bg-red-500 shadow-md shadow-red-500/20'
                         }`} />
                         <h4 className="text-sm font-bold text-white capitalize">{d.label}</h4>
                       </div>
@@ -150,14 +152,15 @@ export default function SessionSetupPage() {
 
             {/* Step 3: Select Duration */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="dev-glass rounded-2xl p-6 border border-white/5 shadow-lg"
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="cyber-card rounded-2xl p-6 border border-white/5 shadow-lg relative overflow-hidden"
             >
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-5 h-5 rounded bg-purple-500/10 text-purple-400 font-mono text-xs">3</span>
-                Session Duration Limits
+              <div className="absolute top-0 left-0 w-20 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-5 flex items-center gap-2.5 font-mono">
+                <span className="flex items-center justify-center w-5 h-5 rounded bg-purple-500/10 text-purple-400 font-mono text-[10px] border border-purple-500/20">03</span>
+                Session Duration & Questions
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -170,12 +173,12 @@ export default function SessionSetupPage() {
                       id={`duration-${d.minutes}`}
                       className={`p-4 rounded-xl border text-center cursor-pointer transition-all ${
                         isSelected
-                          ? 'bg-[#8b5cf6]/5 border-[#8b5cf6] shadow-lg shadow-purple-500/5'
-                          : 'bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+                          ? 'bg-purple-950/15 border-purple-500/80 shadow-lg shadow-purple-500/5'
+                          : 'bg-zinc-950/60 border-white/5 hover:border-white/10 hover:bg-zinc-950'
                       }`}
                     >
-                      <h4 className="text-base font-bold text-white mb-1">{d.label}</h4>
-                      <p className="text-xs text-zinc-500 font-mono">{d.questions} Questions</p>
+                      <h4 className="text-base font-extrabold text-white mb-1">{d.label}</h4>
+                      <p className="text-[10px] text-zinc-500 font-mono">{d.questions} Questions telemetry</p>
                     </div>
                   );
                 })}
@@ -186,17 +189,17 @@ export default function SessionSetupPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-              className="flex flex-col items-end gap-3"
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="flex flex-col items-end gap-3 pt-4"
             >
               {!topic && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] font-mono text-zinc-500">
                   💡 Select a target interview domain block above to initialize session compilation.
                 </p>
               )}
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs w-full max-w-md text-right">
+                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs w-full max-w-md text-right font-mono">
                   {error}
                 </div>
               )}
@@ -205,17 +208,17 @@ export default function SessionSetupPage() {
                 onClick={handleStart}
                 disabled={!topic || isLoading}
                 id="btn-start-interview"
-                className="btn-dev btn-dev-primary py-3.5 px-8 rounded-xl font-bold flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                style={!topic ? { transform: 'none', boxShadow: 'none' } : {}}
+                className="relative inline-flex items-center gap-2.5 py-4 px-8 rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-purple-500/20 transition-all overflow-hidden group"
               >
+                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 {isLoading ? (
                   <>
-                    <div className="spinner-dev" />
-                    <span>Compiling telemetry environments...</span>
+                    <div className="w-4 h-4 rounded-full border border-white/30 border-t-white animate-spin shrink-0" />
+                    <span className="font-mono">Compiling telemetry environments...</span>
                   </>
                 ) : (
                   <>
-                    <Play size={14} className="fill-current text-white" />
+                    <Play size={12} className="fill-current text-white shrink-0" />
                     <span>Initialize Calibration</span>
                   </>
                 )}

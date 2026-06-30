@@ -12,7 +12,6 @@ export default function FloatingIsland() {
 
   const [islandState, setIslandState] = useState('idle'); // 'idle' | 'uploading' | 'saving' | 'success' | 'error' | 'warning'
   const [message, setMessage] = useState('');
-  const [key, setKey] = useState(0);
 
   // Derive status from existing Zustand store states
   const isSubmitting = sessionStore.isSubmitting;
@@ -96,6 +95,10 @@ export default function FloatingIsland() {
     sessionError,
     proctoringError,
     authError,
+    islandState,
+    sessionStore,
+    proctoringStore,
+    authStore
   ]);
 
   // Framer Motion animation configurations for morphing shapes
@@ -106,48 +109,54 @@ export default function FloatingIsland() {
           width: 320,
           height: 52,
           borderRadius: 26,
-          backgroundColor: '#09090b',
-          borderColor: 'rgba(139, 92, 246, 0.4)',
+          backgroundColor: '#0a0a0f',
+          borderColor: 'rgba(139, 92, 246, 0.45)',
+          boxShadow: '0 0 15px rgba(139, 92, 246, 0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.5)',
         };
       case 'saving':
         return {
-          width: 280,
+          width: 290,
           height: 48,
           borderRadius: 24,
-          backgroundColor: '#09090b',
-          borderColor: 'rgba(59, 130, 246, 0.4)',
+          backgroundColor: '#0a0a0f',
+          borderColor: 'rgba(59, 130, 246, 0.45)',
+          boxShadow: '0 0 15px rgba(59, 130, 246, 0.12), 0 8px 32px 0 rgba(0, 0, 0, 0.5)',
         };
       case 'success':
         return {
           width: 320,
           height: 50,
           borderRadius: 25,
-          backgroundColor: '#09090b',
+          backgroundColor: '#0a0a0f',
           borderColor: 'rgba(16, 185, 129, 0.5)',
+          boxShadow: '0 0 15px rgba(16, 185, 129, 0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.5)',
         };
       case 'warning':
         return {
           width: 360,
           height: 54,
           borderRadius: 16,
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderColor: 'rgba(239, 68, 68, 0.6)',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          borderColor: 'rgba(239, 68, 68, 0.65)',
+          boxShadow: '0 0 20px rgba(239, 68, 68, 0.25), 0 8px 32px 0 rgba(0, 0, 0, 0.5)',
         };
       case 'error':
         return {
           width: 380,
           height: 54,
           borderRadius: 14,
-          backgroundColor: '#18181b',
-          borderColor: 'rgba(239, 68, 68, 0.6)',
+          backgroundColor: '#0d0707',
+          borderColor: 'rgba(239, 68, 68, 0.65)',
+          boxShadow: '0 0 20px rgba(239, 68, 68, 0.2), 0 8px 32px 0 rgba(0, 0, 0, 0.5)',
         };
       default: // idle
         return {
-          width: 140,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: '#000000',
-          borderColor: 'rgba(255, 255, 255, 0.1)',
+          width: 150,
+          height: 38,
+          borderRadius: 19,
+          backgroundColor: '#030306',
+          borderColor: 'rgba(255, 255, 255, 0.06)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
         };
     }
   };
@@ -155,17 +164,17 @@ export default function FloatingIsland() {
   const renderIcon = () => {
     switch (islandState) {
       case 'uploading':
-        return <UploadCloud size={16} className="text-[#a78bfa] animate-pulse" />;
+        return <UploadCloud size={15} className="text-purple-400 animate-pulse" />;
       case 'saving':
-        return <Cpu size={16} className="text-blue-400 animate-spin" style={{ animationDuration: '3s' }} />;
+        return <Cpu size={15} className="text-cyan-400 animate-spin" style={{ animationDuration: '3s' }} />;
       case 'success':
-        return <CheckCircle size={16} className="text-emerald-400 animate-bounce" />;
+        return <CheckCircle size={15} className="text-emerald-400" />;
       case 'warning':
-        return <ShieldAlert size={18} className="text-red-500 animate-bounce" />;
+        return <ShieldAlert size={16} className="text-red-400 animate-bounce" />;
       case 'error':
-        return <AlertCircle size={18} className="text-red-500" />;
+        return <AlertCircle size={16} className="text-red-400" />;
       default:
-        return <Lock size={12} className="text-zinc-500" />;
+        return <Lock size={11} className="text-zinc-500" />;
     }
   };
 
@@ -174,7 +183,7 @@ export default function FloatingIsland() {
       <motion.div
         animate={getIslandVariants()}
         transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-        className="dev-glass flex items-center justify-center px-4 overflow-hidden border"
+        className="flex items-center justify-center px-4 overflow-hidden border backdrop-blur-xl"
       >
         <div className="flex items-center gap-3 w-full justify-center">
           <AnimatePresence mode="wait">
@@ -197,7 +206,7 @@ export default function FloatingIsland() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.15 }}
-                className="text-[12px] font-medium text-zinc-300 truncate tracking-tight max-w-[80%]"
+                className="text-xs font-semibold text-zinc-300 truncate tracking-wide font-mono max-w-[80%]"
               >
                 {message}
               </motion.span>
@@ -207,9 +216,9 @@ export default function FloatingIsland() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-[10px] uppercase font-semibold tracking-widest text-zinc-500"
+                className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono"
               >
-                Secure Environment
+                Secure Link
               </motion.span>
             )}
           </AnimatePresence>
