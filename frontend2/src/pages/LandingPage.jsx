@@ -271,7 +271,17 @@ const prompt = \`
 
         {/* Title */}
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl font-heading leading-[1.1] select-none">
-          The Next-Generation{' '}
+          <motion.span
+            whileHover={{
+              y: -5,
+              rotate: -0.5,
+              filter: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.35))'
+            }}
+            transition={{ type: 'spring', stiffness: 350, damping: 18 }}
+            className="inline-block cursor-pointer"
+          >
+            The Next-Generation
+          </motion.span>{' '}
           <motion.span
             whileHover={{
               scale: 1.05,
