@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import SessionSetupPage from './pages/SessionSetupPage';
 import InterviewRoom from './components/Interview/InterviewRoom';
+import LandingPage from './pages/LandingPage';
 import useAuthStore from './store/authStore';
 import './App.css';
 
@@ -81,6 +82,9 @@ function App() {
 
         {/* Workspace Routes Router */}
         <Routes>
+          {/* Landing Page */}
+          <Route path="/" element={<LandingPage />} />
+
           {/* Public authentication gateways */}
           <Route
             path="/login"
