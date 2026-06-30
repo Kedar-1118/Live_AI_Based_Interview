@@ -270,8 +270,30 @@ const prompt = \`
         </div>
 
         {/* Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl font-heading leading-[1.1]">
-          The Next-Generation <span className="text-cyber-gradient">AI Proctoring</span> Interview Sandbox
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl font-heading leading-[1.1] select-none">
+          The Next-Generation{' '}
+          <motion.span
+            whileHover={{
+              scale: 1.05,
+              filter: 'drop-shadow(0 0 15px rgba(168, 85, 247, 0.75))',
+              textShadow: '0 0 8px rgba(168, 85, 247, 0.5)'
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+            className="text-cyber-gradient inline-block cursor-pointer relative"
+          >
+            AI Proctoring
+          </motion.span>{' '}
+          <motion.span
+            whileHover={{
+              scale: 1.05,
+              filter: 'drop-shadow(0 0 15px rgba(6, 182, 212, 0.75))',
+              textShadow: '0 0 8px rgba(6, 182, 212, 0.5)'
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+            className="text-cyan-gradient inline-block cursor-pointer relative"
+          >
+            Interview Sandbox
+          </motion.span>
         </h1>
 
         {/* Subtitle */}
@@ -280,9 +302,17 @@ const prompt = \`
         </p>
 
         {/* Interactive Shell command block placeholder */}
-        <div className="bg-zinc-950/60 border border-white/5 rounded-lg py-2 px-4 text-xs text-purple-400 font-mono inline-block">
+        <motion.div
+          whileHover={{
+            scale: 1.03,
+            borderColor: 'rgba(139, 92, 246, 0.3)',
+            boxShadow: '0 0 15px rgba(139, 92, 246, 0.12)'
+          }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className="bg-zinc-950/60 border border-white/5 rounded-lg py-2 px-4 text-xs text-purple-400 font-mono inline-block cursor-pointer transition-all duration-300"
+        >
           <span className="text-zinc-600">npm init</span> interview-ai-sandbox <span className="text-cyan-400">--theme cyber-midnight</span>
-        </div>
+        </motion.div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
