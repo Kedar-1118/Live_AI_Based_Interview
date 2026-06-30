@@ -38,10 +38,14 @@ function App() {
 
   if (checkingAuth) {
     return (
-      <div className="flex min-h-screen bg-[#030303] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="spinner-dev animate-spin" style={{ width: 28, height: 28 }} />
-          <span className="text-zinc-500 text-xs tracking-wider font-mono">Initializing Telemetry Shell...</span>
+      <div className="flex min-h-screen bg-[#030306] items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 cyber-grid-bg pointer-events-none z-0" />
+        <div className="flex flex-col items-center gap-4 z-10">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full border border-purple-500/30 border-t-purple-500 animate-spin" />
+            <div className="absolute inset-0 w-10 h-10 rounded-full border border-cyan-500/10 animate-ping" style={{ animationDuration: '3s' }} />
+          </div>
+          <span className="text-zinc-500 text-xs tracking-widest font-mono uppercase">Initializing Telemetry Shell...</span>
         </div>
       </div>
     );
@@ -49,11 +53,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="app min-h-screen bg-[#030303] text-zinc-100 flex flex-col md:flex-row relative">
+      <div className="app min-h-screen bg-[#030306] text-zinc-100 flex flex-col md:flex-row relative overflow-hidden">
+        
+        {/* Global Matrix Grid overlay */}
+        <div className="absolute inset-0 cyber-grid-bg pointer-events-none z-0" />
         
         {/* Background ambient light orbs */}
-        <div className="glow-bg-orb glow-purple" />
-        <div className="glow-bg-orb glow-blue" />
+        <div className="ambient-glow-purple -top-20 right-0" />
+        <div className="ambient-glow-blue bottom-0 left-0" />
 
         {/* Global floating Apple-style Dynamic Island notification center */}
         <FloatingIsland />

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { userAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -65,35 +65,27 @@ export default function DashboardPage() {
 
   const getDifficultyColor = (difficulty) => {
     const classes = {
-      easy: 'badge-dev-easy',
-      medium: 'badge-dev-medium',
-      hard: 'badge-dev-hard',
+      easy: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+      medium: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+      hard: 'bg-red-500/10 border-red-500/20 text-red-400',
     };
-    return `badge-dev ${classes[difficulty] || 'badge-dev-medium'}`;
+    return `text-[10px] font-mono px-2 py-0.5 rounded border ${classes[difficulty] || 'bg-zinc-800 border-zinc-700 text-zinc-300'}`;
   };
 
   const getStatusColor = (status) => {
     const classes = {
-      active: 'badge-dev-active',
-      completed: 'badge-dev-completed',
+      active: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+      completed: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
     };
-    return `badge-dev ${classes[status] || ''}`;
+    return `text-[10px] font-mono px-2 py-0.5 rounded border ${classes[status] || 'bg-zinc-800 border-zinc-700 text-zinc-300'}`;
   };
 
   const getScoreColor = (score) => {
-    if (score === null || score === undefined) return 'text-zinc-500';
+    if (score === null || score === undefined) return 'text-zinc-600';
     if (score <= 3) return 'text-red-400';
     if (score <= 5) return 'text-amber-400';
     if (score <= 7) return 'text-blue-400';
     return 'text-emerald-400';
-  };
-
-  const getScoreLabel = (score) => {
-    if (score === null || score === undefined) return 'N/A';
-    if (score <= 3) return 'Critical';
-    if (score <= 5) return 'Weak';
-    if (score <= 7) return 'Moderate';
-    return 'Strong';
   };
 
   // Toggle tasks check
@@ -103,10 +95,11 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="spinner-dev" style={{ width: 32, height: 32 }} />
-          <p className="text-zinc-400 text-sm tracking-wide">Syncing developer workspace...</p>
+      <div className="min-h-screen bg-[#030306] flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 cyber-grid-bg pointer-events-none z-0" />
+        <div className="flex flex-col items-center gap-4 z-10">
+          <div className="w-10 h-10 rounded-full border border-purple-500/30 border-t-purple-500 animate-spin" />
+          <p className="text-zinc-500 text-xs tracking-widest font-mono uppercase">Syncing developer workspace...</p>
         </div>
       </div>
     );
@@ -123,60 +116,70 @@ export default function DashboardPage() {
     }));
 
   return (
-    <div className="relative min-h-screen bg-[#030303] overflow-hidden">
-      {/* Background orbs */}
-      <div className="glow-bg-orb glow-purple" />
-      <div className="glow-bg-orb glow-blue" />
-
-      <div className="workspace-container md:pl-24 lg:pl-[240px] transition-all" id="dashboard-page">
-        <main className="workspace-content">
+    <div className="relative min-h-screen bg-[#030306] overflow-x-hidden w-full">
+      {/* Workspace container */}
+      <div className="workspace-container md:pl-24 lg:pl-[260px] p-6 lg:p-10 transition-all z-10 relative" id="dashboard-page">
+        <main className="workspace-content max-w-7xl mx-auto space-y-10">
           
           {/* Hero Welcome Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/[0.04]">
             <div>
+              <div className="flex items-center gap-2 text-[10px] text-cyan-400 font-mono tracking-widest uppercase mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 dot-blink" />
+                Telemetry Active
+              </div>
               <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2">
-                Workspace / <span className="text-gradient font-bold">{user?.name || 'Developer'}</span>
+                Workspace / <span className="text-cyber-gradient font-bold">{user?.name || 'Developer'}</span>
               </h1>
-              <p className="text-zinc-400 text-sm max-w-lg">
+              <p className="text-zinc-400 text-xs font-mono max-w-lg">
                 Proctored sandbox telemetry, adaptive mock scores, and active weakness trackers.
               </p>
             </div>
+            
             <Link
               to="/session/setup"
               id="btn-new-interview"
-              className="btn-dev btn-dev-primary flex items-center gap-2"
+              className="relative inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-purple-500/20 transition-all cursor-pointer overflow-hidden group"
             >
-              <Play size={14} className="fill-current text-white" />
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <Play size={12} className="fill-current text-white shrink-0" />
               <span>Launch Simulator</span>
             </Link>
           </div>
 
           {/* Bento Grid */}
-          <div className="bento-grid">
+          <div className="grid grid-cols-12 gap-6">
             
             {/* CARD 1: Pinned Session Workspace (Recent Sessions table) - Large Bento 8 Columns */}
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 xl:col-span-8 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 xl:col-span-8 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Activity size={18} className="text-[#a78bfa]" />
-                  <h3 className="font-bold text-sm tracking-tight text-white">Active Telemetry / Recent Sessions</h3>
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+              
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <Activity size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">Telemetry Log</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Mock session history database</p>
+                  </div>
                 </div>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold bg-white/5 px-2 py-0.5 rounded">
-                  Live DB Connection
+                <span className="text-[9px] text-cyan-400 uppercase tracking-widest font-mono bg-cyan-950/40 border border-cyan-800/30 px-2.5 py-1 rounded-md">
+                  Live DB
                 </span>
               </div>
 
               {dashboard?.recent_sessions?.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse min-w-[550px]">
                     <thead>
-                      <tr className="border-b border-white/[0.04] text-zinc-500 text-[10px] uppercase font-semibold tracking-wider">
+                      <tr className="border-b border-white/[0.04] text-zinc-500 text-[10px] uppercase font-mono tracking-wider">
                         <th className="pb-3 pl-2">Session Topic</th>
                         <th className="pb-3">Difficulty</th>
                         <th className="pb-3">Status</th>
@@ -188,12 +191,12 @@ export default function DashboardPage() {
                       {dashboard.recent_sessions.map((session) => (
                         <tr
                           key={session.id}
-                          className="group hover:bg-white/[0.02] transition-colors rounded-lg"
+                          className="group hover:bg-white/[0.01] transition-colors"
                         >
-                          <td className="py-3 pl-2">
+                          <td className="py-3.5 pl-2">
                             <Link
                               to={`/session/${session.id}`}
-                              className="text-sm font-semibold text-zinc-200 group-hover:text-white transition-colors block"
+                              className="text-sm font-semibold text-zinc-200 group-hover:text-purple-400 transition-colors block"
                             >
                               {session.topic}
                             </Link>
@@ -201,35 +204,35 @@ export default function DashboardPage() {
                               {new Date(session.started_at).toLocaleDateString()}
                             </span>
                           </td>
-                          <td className="py-3">
+                          <td className="py-3.5">
                             <span className={getDifficultyColor(session.difficulty)}>
                               {session.difficulty}
                             </span>
                           </td>
-                          <td className="py-3">
+                          <td className="py-3.5">
                             <span className={getStatusColor(session.status)}>
                               {session.status}
                             </span>
                           </td>
-                          <td className="py-3">
+                          <td className="py-3.5">
                             <div className="flex items-center gap-3">
-                              <div className="w-20 bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                              <div className="w-20 bg-zinc-900 border border-white/[0.03] h-1.5 rounded-full overflow-hidden">
                                 <div
-                                  className="bg-gradient-to-r from-[#7c3aed] to-[#8b5cf6] h-full"
+                                  className="bg-gradient-to-r from-purple-500 to-cyan-500 h-full rounded-full"
                                   style={{
                                     width: `${(session.questions_answered / session.total_questions) * 100}%`
                                   }}
                                 />
                               </div>
-                              <span className="text-xs font-semibold text-zinc-400 font-mono">
+                              <span className="text-[10px] font-semibold text-zinc-400 font-mono">
                                 {session.questions_answered}/{session.total_questions}
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 text-right pr-2">
+                          <td className="py-3.5 text-right pr-2">
                             {session.avg_score !== null ? (
-                              <div className="flex items-center justify-end gap-1">
-                                <span className={`text-sm font-bold font-mono ${getScoreColor(session.avg_score)}`}>
+                              <div className="flex items-center justify-end gap-0.5">
+                                <span className={`text-sm font-extrabold font-mono ${getScoreColor(session.avg_score)}`}>
                                   {session.avg_score.toFixed(1)}
                                 </span>
                                 <span className="text-zinc-600 text-xs">/10</span>
@@ -245,14 +248,14 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4">
-                    <BookOpen size={20} className="text-zinc-500" />
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4 text-zinc-500">
+                    <BookOpen size={20} />
                   </div>
                   <h4 className="text-sm font-bold text-white mb-1">No Practice Sessions Active</h4>
                   <p className="text-xs text-zinc-500 max-w-xs mb-4">
                     Start mock training inside the simulator room to calibrate eye contact vectors.
                   </p>
-                  <Link to="/session/setup" id="btn-first-interview" className="btn-dev btn-dev-primary text-xs">
+                  <Link to="/session/setup" id="btn-first-interview" className="relative inline-flex items-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer">
                     Configure Session
                   </Link>
                 </div>
@@ -263,40 +266,47 @@ export default function DashboardPage() {
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 md:col-span-6 xl:col-span-4 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 md:col-span-6 xl:col-span-4 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-blue-500 to-transparent" />
+              
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={18} className="text-blue-400" />
-                  <h3 className="font-bold text-sm tracking-tight text-white">Score Analytics Timeline</h3>
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    <TrendingUp size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">Performance</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Score analytics over time</p>
+                  </div>
                 </div>
-                <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider">
-                  Adaptive Score
+                <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+                  Adaptive
                 </span>
               </div>
 
               {chartData.length > 0 ? (
-                <div className="w-full h-40">
+                <div className="w-full h-36">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 5, left: -28, bottom: 0 }}>
                       <defs>
                         <linearGradient id="scoreGlow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25}/>
                           <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#52525b" fontSize={10} domain={[0, 10]} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#52525b" fontSize={9} domain={[0, 10]} tickLine={false} axisLine={false} />
                       <Tooltip
                         contentStyle={{
-                          background: '#18181b',
+                          background: '#09090b',
                           borderColor: 'rgba(255,255,255,0.08)',
-                          borderRadius: 8,
-                          fontSize: 12,
+                          borderRadius: 12,
+                          fontSize: 11,
                         }}
-                        labelClassName="text-zinc-500 font-semibold"
+                        labelClassName="text-zinc-500 font-mono font-bold"
                         itemStyle={{ color: '#a78bfa' }}
                       />
                       <Area type="monotone" dataKey="score" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#scoreGlow)" />
@@ -304,23 +314,23 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-40 flex items-center justify-center text-zinc-500 text-xs">
+                <div className="h-36 flex items-center justify-center text-zinc-600 text-xs font-mono">
                   Awaiting telemetry metrics...
                 </div>
               )}
 
               {/* Mini Numerical Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/[0.04]">
+              <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/[0.04]">
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold">Total Sessions</span>
-                  <div className="text-xl font-bold text-white mt-0.5 font-mono">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">Total Sessions</span>
+                  <div className="text-xl font-extrabold text-white mt-1 font-mono">
                     {dashboard?.total_sessions || 0}
                   </div>
                 </div>
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold">Average Grade</span>
-                  <div className="text-xl font-bold mt-0.5 font-mono text-[#a78bfa]">
-                    {dashboard?.avg_score ? `${dashboard.avg_score.toFixed(1)}/10` : '—'}
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">Average Grade</span>
+                  <div className="text-xl font-extrabold mt-1 font-mono text-[#a78bfa]">
+                    {dashboard?.avg_score ? `${dashboard.avg_score.toFixed(1)}` : '—'}
                   </div>
                 </div>
               </div>
@@ -330,20 +340,34 @@ export default function DashboardPage() {
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 md:col-span-6 xl:col-span-4 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 md:col-span-6 xl:col-span-4 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={18} className="text-[#a855f7]" />
-                <h3 className="font-bold text-sm tracking-tight text-white font-mono">AI Sandbox Pilot</h3>
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+
+              <div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">AI Sandbox Pilot</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Adaptive recommendations</p>
+                  </div>
+                </div>
+                <div className="bg-zinc-950/80 border border-white/5 p-4 rounded-xl text-xs leading-relaxed text-zinc-300 font-mono relative">
+                  <span className="absolute top-1 right-2 text-[9px] text-zinc-600 font-mono">SYSTEM</span>
+                  "{assistantMessage}"
+                </div>
               </div>
-              <div className="flex-1 bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl mb-4 text-xs leading-relaxed text-zinc-300">
-                "{assistantMessage}"
-              </div>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                <Cpu size={12} className="text-purple-400" />
-                <span>Model: Gemini 3.5 Flash</span>
+              
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono mt-4 pt-4 border-t border-white/[0.04]">
+                <div className="flex items-center gap-1.5">
+                  <Cpu size={12} className="text-purple-400" />
+                  <span>Gemini 3.5 Flash</span>
+                </div>
+                <span>LLM Engine Active</span>
               </div>
             </motion.div>
 
@@ -351,17 +375,24 @@ export default function DashboardPage() {
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 md:col-span-6 xl:col-span-4 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 md:col-span-6 xl:col-span-4 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-red-500 to-transparent" />
+              
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Layers size={18} className="text-[#a78bfa]" />
-                  <h3 className="font-bold text-sm tracking-tight text-white">Topics Requiring Practice</h3>
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+                    <Layers size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">Critical Concepts</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Topics requiring practice</p>
+                  </div>
                 </div>
-                <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded font-semibold uppercase">
-                  Heatmap
+                <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded font-mono uppercase">
+                  Anomaly Heatmap
                 </span>
               </div>
 
@@ -370,25 +401,25 @@ export default function DashboardPage() {
                   {weakTopics.slice(0, 4).map((wt) => (
                     <div
                       key={wt.id}
-                      className="p-2.5 rounded-xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.03] flex items-center justify-between"
+                      className="p-3 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-white/5 flex items-center justify-between transition-colors"
                     >
                       <div className="min-w-0 pr-2">
                         <span className="text-xs font-semibold text-zinc-200 block truncate">{wt.topic}</span>
-                        <span className="text-[10px] text-zinc-500 block truncate">{wt.subtopic || 'General Concepts'}</span>
+                        <span className="text-[10px] text-zinc-500 font-mono block truncate">{wt.subtopic || 'General Concepts'}</span>
                       </div>
                       <div className="text-right shrink-0">
                         <span className={`text-xs font-bold font-mono ${getScoreColor(wt.avg_score)}`}>
                           {wt.avg_score?.toFixed(1) || '—'}
                         </span>
-                        <span className="text-[9px] text-zinc-500 block">
-                          {wt.occurrence} occurrence{wt.occurrence > 1 ? 's' : ''}
+                        <span className="text-[9px] text-zinc-500 font-mono block">
+                          {wt.occurrence} event{wt.occurrence > 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-40 flex items-center justify-center text-zinc-500 text-xs text-center px-4">
+                <div className="h-40 flex items-center justify-center text-zinc-600 text-xs text-center px-4 font-mono">
                   No weak topics found yet. Keep training to log metrics.
                 </div>
               )}
@@ -398,24 +429,31 @@ export default function DashboardPage() {
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 md:col-span-6 xl:col-span-4 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 md:col-span-6 xl:col-span-4 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <ListTodo size={18} className="text-[#a78bfa]" />
-                  <h3 className="font-bold text-sm tracking-tight text-white">Developer Sandbox Tasks</h3>
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <ListTodo size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">Sandbox Console Tasks</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Calibration objectives</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {tasks.map(t => (
                     <div
                       key={t.id}
                       onClick={() => toggleTask(t.id)}
                       className="flex items-center gap-3 cursor-pointer select-none group"
                     >
-                      <div className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
-                        t.completed ? 'bg-purple-600 border-purple-500 text-white' : 'border-zinc-700 group-hover:border-zinc-500'
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                        t.completed ? 'bg-purple-600 border-purple-500 text-white shadow-md shadow-purple-500/10' : 'border-zinc-700 bg-zinc-950/80 group-hover:border-zinc-500'
                       }`}>
                         {t.completed && (
                           <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20">
@@ -423,14 +461,14 @@ export default function DashboardPage() {
                           </svg>
                         )}
                       </div>
-                      <span className={`text-xs ${t.completed ? 'line-through text-zinc-500' : 'text-zinc-300'}`}>
+                      <span className={`text-xs font-mono transition-colors ${t.completed ? 'line-through text-zinc-500' : 'text-zinc-300 group-hover:text-white'}`}>
                         {t.text}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-              <span className="text-[10px] text-zinc-500 font-mono mt-4 block">
+              <span className="text-[9px] text-zinc-600 font-mono mt-4 block">
                 Interactive Checkboxes
               </span>
             </motion.div>
@@ -439,38 +477,45 @@ export default function DashboardPage() {
             <motion.div
               drag
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.05}
-              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.12)' }}
-              className="col-span-12 md:col-span-6 xl:col-span-4 dev-glass rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing"
+              dragElastic={0.02}
+              className="col-span-12 md:col-span-6 xl:col-span-4 cyber-card rounded-2xl p-6 border border-white/5 shadow-lg cursor-grab active:cursor-grabbing relative overflow-hidden"
             >
+              {/* Card glowing edge */}
+              <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-indigo-500 to-transparent" />
+              
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <FileText size={18} className="text-[#a78bfa]" />
-                  <h3 className="font-bold text-sm tracking-tight text-white">Recent Artifacts</h3>
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <FileText size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm tracking-tight text-white font-heading">Recent Artifacts</h3>
+                    <p className="text-[10px] text-zinc-500 font-mono">Generated log files</p>
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.01] hover:bg-white/[0.02]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-white/5 transition-all">
                   <div className="flex items-center gap-2.5">
-                    <FileText size={14} className="text-zinc-400" />
+                    <FileText size={13} className="text-zinc-500" />
                     <span className="text-xs text-zinc-300 font-mono font-medium">integrity_timeline.log</span>
                   </div>
-                  <span className="text-[9px] text-zinc-500">2KB</span>
+                  <span className="text-[9px] text-zinc-600 font-mono">2KB</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.01] hover:bg-white/[0.02]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-white/5 transition-all">
                   <div className="flex items-center gap-2.5">
-                    <FileSpreadsheet size={14} className="text-zinc-400" />
+                    <FileSpreadsheet size={13} className="text-zinc-500" />
                     <span className="text-xs text-zinc-300 font-mono font-medium">speech_performance.csv</span>
                   </div>
-                  <span className="text-[9px] text-zinc-500">14KB</span>
+                  <span className="text-[9px] text-zinc-600 font-mono">14KB</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.01] hover:bg-white/[0.02]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950/60 hover:bg-zinc-950 border border-white/5 transition-all">
                   <div className="flex items-center gap-2.5">
-                    <FileText size={14} className="text-zinc-400" />
+                    <FileText size={13} className="text-zinc-500" />
                     <span className="text-xs text-zinc-300 font-mono font-medium">calibration_vectors.json</span>
                   </div>
-                  <span className="text-[9px] text-zinc-500">1KB</span>
+                  <span className="text-[9px] text-zinc-600 font-mono">1KB</span>
                 </div>
               </div>
             </motion.div>
