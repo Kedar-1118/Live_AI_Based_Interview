@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -14,23 +14,155 @@ import {
   Mic,
   Layers,
   Lock,
-  ExternalLink,
   Sparkles,
-  CheckCircle2,
-  Monitor,
-  Gauge,
-  Workflow
+  Workflow,
+  MicOff
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('proctoring');
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [commandInput, setCommandInput] = useState('');
 
-  // Interactive Terminal Simulator content
+  // Gaze Tracking Sandbox Interactive States
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHoveredGazeCard, setIsHoveredGazeCard] = useState(false);
+  const gazeCardRef = useRef(null);
+
+  // Audio Testing Baseline States
+  const [isMicTesting, setIsMicTesting] = useState(false);
+  const [audioLevels, setAudioLevels] = useState(new Array(18).fill(20));
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const sourceRef = useRef(null);
+
+  const handleGazeMouseMove = (e) => {
+    if (!gazeCardRef.current) return;
+    const rect = gazeCardRef.current.getBoundingClientRect();
+    // Normalize coordinates relative to card center from -1 to 1
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    setMousePos({ x, y });
+  };
+
+  // Web Audio API Microphone Baseline Visualizer
+  const startMicTest = async () => {
+    if (isMicTesting) {
+      stopMicTest();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64; // Small size for responsive bar nodes
+
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      audioContextRef.current = ctx;
+      analyserRef.current = analyser;
+      sourceRef.current = source;
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+
+      setIsMicTesting(true);
+      updateFrequencyBars();
+    } catch (err) {
+      console.warn('Microphone permission not granted or missing, activating simulated audio baseline');
+      setIsMicTesting(true);
+      simulateFrequencyBars();
+    }
+  };
+
+  const stopMicTest = () => {
+    setIsMicTesting(false);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (sourceRef.current) {
+      sourceRef.current.mediaStream.getTracks().forEach(t => t.stop());
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+    }
+    setAudioLevels(new Array(18).fill(20));
+  };
+
+  const updateFrequencyBars = () => {
+    if (!analyserRef.current || !dataArrayRef.current) return;
+
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    // Map frequency values to dynamic heights
+    const levels = Array.from(dataArrayRef.current)
+      .slice(0, 18)
+      .map(val => Math.max(15, (val / 255) * 90));
+    
+    setAudioLevels(levels);
+    animationFrameRef.current = requestAnimationFrame(updateFrequencyBars);
+  };
+
+  // Elegant fallback sinus wave simulator for audio visualization
+  const simulateFrequencyBars = () => {
+    if (!isMicTesting) return;
+
+    const time = Date.now() * 0.005;
+    const levels = Array.from({ length: 18 }).map((_, i) => {
+      const base = Math.sin(time + i * 0.4) * 35 + 50;
+      const noise = Math.cos(time * 1.5 + i) * 15;
+      return Math.max(15, base + noise);
+    });
+
+    setAudioLevels(levels);
+    animationFrameRef.current = requestAnimationFrame(simulateFrequencyBars);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, []);
+
+  // Terminal commands handling
+  const handleCommandSubmit = (e) => {
+    e.preventDefault();
+    if (!commandInput.trim()) return;
+
+    const cmd = commandInput.toLowerCase().trim();
+    let response = '';
+
+    if (cmd === 'help') {
+      response = 'Payload choices: init, status, telemetry, clean';
+    } else if (cmd === 'init') {
+      response = 'Initializing session_id: a3b9-11ea-9c02... calibration baseline [OK]';
+    } else if (cmd === 'status') {
+      response = `Secure Link: OK | User: ${isAuthenticated ? 'Authenticated' : 'Guest'} | Proctoring: Active`;
+    } else if (cmd === 'telemetry') {
+      response = 'Integrity Score: 100% | Eye Vectors: CALIBRATED | Audio Decibels: -42dB';
+    } else if (cmd === 'clean') {
+      setTerminalLogs([]);
+      setCommandInput('');
+      return;
+    } else {
+      response = `Command unknown: "${cmd}". Type "help" for catalog.`;
+    }
+
+    setTerminalLogs(prev => [...prev, `$ ${commandInput}`, `> ${response}`]);
+    setCommandInput('');
+  };
+
+  // Initial terminal logs output
+  useEffect(() => {
+    setTerminalLogs([
+      'System: Mounting InterviewAI Core Sandbox...',
+      'System: Tracking libraries loaded (MediaPipe, Web Audio API)',
+      'System: Type "help" in the console below to list commands.',
+    ]);
+  }, [isAuthenticated]);
+
   const tabContent = {
     proctoring: {
       title: 'Real-time Computer Vision Proctoring',
@@ -86,43 +218,6 @@ const prompt = \`
     }
   };
 
-  // Simulate terminal command inputs
-  const handleCommandSubmit = (e) => {
-    e.preventDefault();
-    if (!commandInput.trim()) return;
-
-    const cmd = commandInput.toLowerCase().trim();
-    let response = '';
-
-    if (cmd === 'help') {
-      response = 'Available payloads: init, status, telemetry, clean';
-    } else if (cmd === 'init') {
-      response = 'Initializing session_id: a3b9-11ea-9c02... calibration baseline [OK]';
-    } else if (cmd === 'status') {
-      response = `Secure Link: OK | User: ${isAuthenticated ? 'Authenticated' : 'Guest'} | Proctoring: Active`;
-    } else if (cmd === 'telemetry') {
-      response = 'Integrity Score: 100% | Eye Vectors: CALIBRATED | Audio Decibels: -42dB';
-    } else if (cmd === 'clean') {
-      setTerminalLogs([]);
-      setCommandInput('');
-      return;
-    } else {
-      response = `Command unknown: "${cmd}". Type "help" for catalog.`;
-    }
-
-    setTerminalLogs(prev => [...prev, `$ ${commandInput}`, `> ${response}`]);
-    setCommandInput('');
-  };
-
-  // Initial terminal logs output
-  useEffect(() => {
-    setTerminalLogs([
-      'System: Mounting InterviewAI Core Sandbox...',
-      'System: Tracking libraries loaded (MediaPipe, Web Audio API)',
-      'System: Type "help" in the console below to list commands.',
-    ]);
-  }, []);
-
   return (
     <div className="relative min-h-screen bg-[#030306] overflow-x-hidden w-full select-none" id="landing-page">
       {/* Background Matrix Grid */}
@@ -148,9 +243,9 @@ const prompt = \`
         {/* Desktop links */}
         <nav className="hidden md:flex items-center gap-8 text-xs font-mono text-zinc-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
+          <a href="#sandbox" className="hover:text-white transition-colors">Vector Playground</a>
           <a href="#demo" className="hover:text-white transition-colors">Interactive Demo</a>
           <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
-          <a href="#about" className="hover:text-white transition-colors">Specifications</a>
         </nav>
 
         <div>
@@ -202,11 +297,196 @@ const prompt = \`
           </Link>
           
           <a
-            href="#demo"
+            href="#sandbox"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 py-4 px-8 rounded-xl bg-zinc-950/60 border border-white/5 hover:border-white/10 hover:bg-zinc-950 text-zinc-300 hover:text-white font-bold text-xs font-mono transition-all cursor-pointer"
           >
-            <span>View Architecture Demo</span>
+            <span>Interact with Vision Sensors</span>
           </a>
+        </div>
+      </section>
+
+      {/* NEW UNIQUE & EYE CATCHING ELEMENTS SANDBOX SECTION */}
+      <section id="sandbox" className="relative z-10 max-w-6xl mx-auto px-6 py-20 border-t border-white/[0.04]">
+        
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <h2 className="text-xs font-bold text-cyan-400 uppercase tracking-widest font-mono">Interactive Hardware Calibration</h2>
+          <h3 className="text-3xl font-extrabold text-white font-heading">Test Vision Vectors & Voice Baselines</h3>
+          <p className="text-zinc-500 text-xs font-mono">
+            Hover over the head mesh or activate the microphone check to experience the local telemetry engine directly inside the browser.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Card 1: Gaze Tracker Face Mesh HUD Simulator */}
+          <div
+            ref={gazeCardRef}
+            onMouseMove={handleGazeMouseMove}
+            onMouseEnter={() => setIsHoveredGazeCard(true)}
+            onMouseLeave={() => {
+              setIsHoveredGazeCard(false);
+              setMousePos({ x: 0, y: 0 });
+            }}
+            className="cyber-card rounded-2xl p-6 border border-white/5 relative overflow-hidden flex flex-col justify-between h-[380px] group transition-all"
+          >
+            <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-purple-500 to-transparent" />
+            
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="text-sm font-bold text-white font-heading">MediaPipe Gaze Vector HUD</h4>
+                <p className="text-[10px] text-zinc-500 font-mono">Simulated face-mesh eye coordinate tracking</p>
+              </div>
+              <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${
+                !isHoveredGazeCard ? 'bg-zinc-900 border-zinc-800 text-zinc-500' :
+                Math.abs(mousePos.x) > 0.6 || Math.abs(mousePos.y) > 0.6 ? 'bg-red-500/10 border-red-500/20 text-red-400 animate-pulse' :
+                'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+              }`}>
+                {!isHoveredGazeCard ? 'SLEEP' :
+                 Math.abs(mousePos.x) > 0.6 || Math.abs(mousePos.y) > 0.6 ? 'WARN: GAZE AWAY' : 'LOCK: STABLE'}
+              </span>
+            </div>
+
+            {/* Central Graphic: Responsive Facial Vector Grid */}
+            <div className="relative flex-1 flex items-center justify-center">
+              {/* Outer calibration radar lines */}
+              <div className="absolute w-44 h-44 rounded-full border border-white/[0.02] animate-ping" style={{ animationDuration: '6s' }} />
+              <div className="absolute w-56 h-56 rounded-full border border-white/[0.01]" />
+
+              {/* Gaze tracking line from center to cursor */}
+              {isHoveredGazeCard && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                  <line
+                    x1="50%"
+                    y1="50%"
+                    x2={`${50 + mousePos.x * 25}%`}
+                    y2={`${50 + mousePos.y * 25}%`}
+                    stroke="rgba(139, 92, 246, 0.4)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                  />
+                  <circle
+                    cx={`${50 + mousePos.x * 25}%`}
+                    cy={`${50 + mousePos.y * 25}%`}
+                    r="4"
+                    fill="#a78bfa"
+                    className="animate-pulse"
+                  />
+                </svg>
+              )}
+
+              {/* Custom SVG facial mesh representation */}
+              <svg width="120" height="150" viewBox="0 0 120 150" className="text-zinc-700 z-10">
+                {/* Outer Head Frame */}
+                <ellipse cx="60" cy="75" rx="45" ry="55" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+                <path d="M 60,20 Q 60,130 60,130" stroke="currentColor" strokeWidth="0.5" opacity="0.3" />
+                <path d="M 15,75 Q 60,75 105,75" stroke="currentColor" strokeWidth="0.5" opacity="0.3" />
+
+                {/* Left Eye Node */}
+                <circle cx={`${42 + mousePos.x * 4}`} cy={`${65 + mousePos.y * 4}`} r="5" fill="none" stroke={isHoveredGazeCard ? "#8b5cf6" : "currentColor"} strokeWidth="1.5" />
+                <circle cx={`${42 + mousePos.x * 6}`} cy={`${65 + mousePos.y * 6}`} r="1.5" fill={isHoveredGazeCard ? "#06b6d4" : "currentColor"} />
+
+                {/* Right Eye Node */}
+                <circle cx={`${78 + mousePos.x * 4}`} cy={`${65 + mousePos.y * 4}`} r="5" fill="none" stroke={isHoveredGazeCard ? "#8b5cf6" : "currentColor"} strokeWidth="1.5" />
+                <circle cx={`${78 + mousePos.x * 6}`} cy={`${65 + mousePos.y * 6}`} r="1.5" fill={isHoveredGazeCard ? "#06b6d4" : "currentColor"} />
+
+                {/* Nose mesh anchor */}
+                <polygon points={`${60 + mousePos.x * 3},75 ${57 + mousePos.x * 2},90 ${63 + mousePos.x * 2},90`} fill="none" stroke="currentColor" strokeWidth="1" />
+
+                {/* Mouth mesh coordinate points */}
+                <path d={`M ${48 + mousePos.x * 2},105 Q ${60 + mousePos.x * 3},${112 + mousePos.y * 2} ${72 + mousePos.x * 2},105`} fill="none" stroke={isHoveredGazeCard ? "#8b5cf6" : "currentColor"} strokeWidth="1" />
+              </svg>
+            </div>
+
+            {/* Matrix Data outputs */}
+            <div className="grid grid-cols-2 gap-4 border-t border-white/[0.04] pt-4 font-mono text-[9px] text-zinc-500">
+              <div>
+                <span>Eye Focus Coord:</span>
+                <span className="text-zinc-300 block font-semibold">
+                  X: {mousePos.x.toFixed(3)}, Y: {mousePos.y.toFixed(3)}
+                </span>
+              </div>
+              <div className="text-right">
+                <span>Mesh Tracking Status:</span>
+                <span className={`block font-semibold ${isHoveredGazeCard ? 'text-purple-400' : 'text-zinc-500'}`}>
+                  {isHoveredGazeCard ? 'TRACKING ACTIVE' : 'AWAITING HANDSHAKE'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Audio Frequency Decibel Visualizer */}
+          <div className="cyber-card rounded-2xl p-6 border border-white/5 relative overflow-hidden flex flex-col justify-between h-[380px] transition-all">
+            <div className="absolute top-0 left-0 w-24 h-[1px] bg-gradient-to-r from-cyan-500 to-transparent" />
+
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="text-sm font-bold text-white font-heading">Vocal Frequency Spectrum check</h4>
+                <p className="text-[10px] text-zinc-500 font-mono">Microphone db input mapping visualizer</p>
+              </div>
+              <span className={`text-[9px] font-mono px-2.5 py-1 rounded-md border ${
+                isMicTesting ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+              }`}>
+                {isMicTesting ? 'SPEECH SENSOR ON' : 'SENSOR SLEEP'}
+              </span>
+            </div>
+
+            {/* Visualizer active panel */}
+            <div className="relative flex-1 flex flex-col items-center justify-center bg-zinc-950/40 rounded-xl border border-white/[0.02] p-6">
+              
+              {/* Dynamic waveform display bars */}
+              <div className="flex items-end gap-1.5 h-28 justify-center w-full">
+                {audioLevels.map((height, idx) => (
+                  <div
+                    key={idx}
+                    className="w-2.5 rounded-t bg-gradient-to-t from-purple-600 via-purple-500 to-cyan-400 transition-all duration-75 relative"
+                    style={{
+                      height: `${height}%`,
+                      boxShadow: isMicTesting ? '0 0 10px rgba(6, 182, 212, 0.2)' : 'none'
+                    }}
+                  >
+                    {/* Glowing caps */}
+                    {isMicTesting && (
+                      <div className="absolute -top-1 left-0 right-0 h-1 rounded-full bg-cyan-200" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Instruction banner */}
+              <div className="mt-6 text-center">
+                <button
+                  onClick={startMicTest}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer ${
+                    isMicTesting
+                      ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
+                      : 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 shadow-lg shadow-cyan-500/5'
+                  }`}
+                >
+                  {isMicTesting ? (
+                    <>
+                      <MicOff size={13} />
+                      <span>Release Audio Stream</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic size={13} />
+                      <span>Test Speech Sensor Baseline</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </div>
+
+            {/* Spectrum info text */}
+            <div className="flex items-center justify-between border-t border-white/[0.04] pt-4 font-mono text-[9px] text-zinc-500">
+              <span>Hertz band: 20Hz - 22kHz</span>
+              <span>Buffer allocation: Web Audio Nodes</span>
+            </div>
+
+          </div>
+
         </div>
       </section>
 
@@ -524,7 +804,7 @@ const prompt = \`
       </section>
 
       {/* MOCK PRICING & SPECIFICATIONS TAB */}
-      <section id="about" className="relative z-10 max-w-6xl mx-auto px-6 py-20 border-t border-white/[0.04]">
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-20 border-t border-white/[0.04]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           
           {/* Platform stats */}

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Sidebar from './components/Layout/Sidebar';
 import FloatingIsland from './components/Layout/FloatingIsland';
@@ -13,11 +13,14 @@ import LandingPage from './pages/LandingPage';
 import useAuthStore from './store/authStore';
 import './App.css';
 
-function App() {
-  const { isAuthenticated, checkAuth } = useAuthStore();
+function AppContent() {
+  const { isAuthenticated, checkAuth, error: authError, clearError: clearAuthError } = useAuthStore();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const location = useLocation();
+
+  const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
     checkAuth().finally(() => {
@@ -53,87 +56,95 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <div className="app min-h-screen bg-[#030306] text-zinc-100 flex flex-col md:flex-row relative overflow-hidden">
-        
-        {/* Global Matrix Grid overlay */}
-        <div className="absolute inset-0 cyber-grid-bg pointer-events-none z-0" />
-        
-        {/* Background ambient light orbs */}
-        <div className="ambient-glow-purple -top-20 right-0" />
-        <div className="ambient-glow-blue bottom-0 left-0" />
+    <div className={`app min-h-screen bg-[#030306] text-zinc-100 relative overflow-hidden ${
+      isLandingPage ? 'block' : 'flex flex-col md:flex-row'
+    }`}>
+      
+      {/* Global Matrix Grid overlay */}
+      <div className="absolute inset-0 cyber-grid-bg pointer-events-none z-0" />
+      
+      {/* Background ambient light orbs */}
+      <div className="ambient-glow-purple -top-20 right-0" />
+      <div className="ambient-glow-blue bottom-0 left-0" />
 
-        {/* Global floating Apple-style Dynamic Island notification center */}
-        <FloatingIsland />
+      {/* Global floating Apple-style Dynamic Island notification center */}
+      {!isLandingPage && <FloatingIsland />}
 
-        {/* Ctrl+K Keyboard Search Palette Console */}
-        <CommandPalette
-          isOpen={isCommandPaletteOpen}
-          onClose={() => setIsCommandPaletteOpen(false)}
-          toggleSidebar={() => setIsSidebarCollapsed(prev => !prev)}
-        />
+      {/* Ctrl+K Keyboard Search Palette Console */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        toggleSidebar={() => setIsSidebarCollapsed(prev => !prev)}
+      />
 
-        {/* Left Floating Sidebar */}
+      {/* Left Floating Sidebar */}
+      {!isLandingPage && (
         <Sidebar
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}
           onOpenPalette={() => setIsCommandPaletteOpen(true)}
         />
+      )}
 
-        {/* Workspace Routes Router */}
-        <Routes>
-          {/* Landing Page */}
-          <Route path="/" element={<LandingPage />} />
+      {/* Workspace Routes Router */}
+      <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
 
-          {/* Public authentication gateways */}
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />
-            }
-          />
+        {/* Public authentication gateways */}
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+          }
+        />
 
-          {/* Protected Developer Workspaces */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/session/setup"
-            element={
-              <ProtectedRoute>
-                <SessionSetupPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/session/:sessionId"
-            element={
-              <ProtectedRoute>
-                <InterviewRoom />
-              </ProtectedRoute>
-            }
-          />
+        {/* Protected Developer Workspaces */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/session/setup"
+          element={
+            <ProtectedRoute>
+              <SessionSetupPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/session/:sessionId"
+          element={
+            <ProtectedRoute>
+              <InterviewRoom />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Fallback Redirection */}
-          <Route
-            path="*"
-            element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
-          />
-        </Routes>
-      </div>
-    </BrowserRouter>
+        {/* Fallback Redirection */}
+        <Route
+          path="*"
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+        />
+      </Routes>
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
