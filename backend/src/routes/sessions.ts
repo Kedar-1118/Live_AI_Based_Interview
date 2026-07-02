@@ -22,17 +22,65 @@ const upload = multer({
 router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
   const { topic, difficulty, duration_minutes, total_questions, llm_provider, llm_model } = req.body;
 
-  if (!topic) {
-    return res.status(400).json({ detail: 'Topic is required' });
+  if (!topic || typeof topic !== 'string' || topic.trim() === '' || topic.length > 100) {
+    return res.status(400).json({ detail: 'Topic is required and must be a string under 100 characters' });
+  }
+
+  let finalDifficulty = 'medium';
+  if (difficulty !== undefined) {
+    if (typeof difficulty !== 'string') {
+      return res.status(400).json({ detail: 'Difficulty must be a string' });
+    }
+    const diffLower = difficulty.toLowerCase().trim();
+    if (diffLower !== 'easy' && diffLower !== 'medium' && diffLower !== 'hard') {
+      return res.status(400).json({ detail: 'Difficulty must be one of: easy, medium, hard' });
+    }
+    finalDifficulty = diffLower;
+  }
+
+  let finalDuration = 30;
+  if (duration_minutes !== undefined) {
+    const parsedDuration = Number(duration_minutes);
+    if (isNaN(parsedDuration) || parsedDuration < 5 || parsedDuration > 120 || !Number.isInteger(parsedDuration)) {
+      return res.status(400).json({ detail: 'Duration must be an integer between 5 and 120 minutes' });
+    }
+    finalDuration = parsedDuration;
+  }
+
+  let finalTotalQuestions = 10;
+  if (total_questions !== undefined) {
+    const parsedQuestions = Number(total_questions);
+    if (isNaN(parsedQuestions) || parsedQuestions < 1 || parsedQuestions > 25 || !Number.isInteger(parsedQuestions)) {
+      return res.status(400).json({ detail: 'Total questions must be an integer between 1 and 25' });
+    }
+    finalTotalQuestions = parsedQuestions;
+  }
+
+  let provider = config.DEFAULT_LLM_PROVIDER;
+  if (llm_provider !== undefined) {
+    if (typeof llm_provider !== 'string') {
+      return res.status(400).json({ detail: 'LLM provider must be a string' });
+    }
+    const provLower = llm_provider.toLowerCase().trim();
+    const validProviders = ['mock', 'openai', 'anthropic', 'gemini', 'groq', 'ollama'];
+    if (!validProviders.includes(provLower)) {
+      return res.status(400).json({ detail: `LLM provider must be one of: ${validProviders.join(', ')}` });
+    }
+    provider = provLower;
+  }
+
+  let model = config.DEFAULT_LLM_MODEL;
+  if (llm_model !== undefined) {
+    if (typeof llm_model !== 'string' || llm_model.trim() === '' || llm_model.length > 100) {
+      return res.status(400).json({ detail: 'LLM model must be a non-empty string under 100 characters' });
+    }
+    model = llm_model.trim();
   }
 
   try {
     const db = getDb();
     const sessionId = uuidv4();
     const startedAt = new Date().toISOString();
-
-    const provider = llm_provider || config.DEFAULT_LLM_PROVIDER;
-    const model = llm_model || config.DEFAULT_LLM_MODEL;
 
     // Create session record
     await db.run(
@@ -42,12 +90,12 @@ router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
       [
         sessionId,
         req.userId,
-        topic,
-        difficulty || 'medium',
-        duration_minutes || 30,
+        topic.trim(),
+        finalDifficulty,
+        finalDuration,
         'active',
         100,
-        total_questions || 10,
+        finalTotalQuestions,
         startedAt,
         provider,
         model
@@ -55,7 +103,7 @@ router.post('/create', requireAuth, async (req: AuthRequest, res: Response) => {
     );
 
     // Generate first question
-    const firstQuestion = await generateFirstQuestion(topic, difficulty || 'medium', provider, model, req.user);
+    const firstQuestion = await generateFirstQuestion(topic.trim(), finalDifficulty, provider, model, req.user);
 
     // Create first exchange record (index 1)
     const exchangeId = uuidv4();

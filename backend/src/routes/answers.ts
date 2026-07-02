@@ -159,8 +159,16 @@ async function validateSession(sessionId: string, userId: string): Promise<any> 
 router.post('/submit', requireAuth, async (req: AuthRequest, res: Response) => {
   const { session_id, answer_text } = req.body;
 
-  if (!session_id || !answer_text) {
-    return res.status(400).json({ detail: 'session_id and answer_text are required' });
+  if (!session_id || typeof session_id !== 'string') {
+    return res.status(400).json({ detail: 'session_id is required and must be a string' });
+  }
+
+  if (!answer_text || typeof answer_text !== 'string' || answer_text.trim() === '') {
+    return res.status(400).json({ detail: 'answer_text is required and must be a non-empty string' });
+  }
+
+  if (answer_text.length > 5000) {
+    return res.status(400).json({ detail: 'Answer text exceeds maximum allowed length of 5000 characters' });
   }
 
   try {
@@ -201,13 +209,30 @@ router.post('/submit', requireAuth, async (req: AuthRequest, res: Response) => {
 router.post('/submit-audio', requireAuth, upload.single('audio'), async (req: AuthRequest, res: Response) => {
   const { session_id } = req.body;
 
-  if (!session_id) {
+  if (!session_id || typeof session_id !== 'string') {
     if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(400).json({ detail: 'session_id is required' });
+    return res.status(400).json({ detail: 'session_id is required and must be a string' });
   }
 
   if (!req.file) {
     return res.status(400).json({ detail: 'No audio file provided' });
+  }
+
+  // Mimetype validation to prevent arbitrary binary upload abuse
+  const allowedMimes = [
+    'audio/webm',
+    'audio/ogg',
+    'audio/wav',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/x-m4a',
+    'audio/x-webm',
+    'video/webm',
+    'audio/x-wav'
+  ];
+  if (!req.file.mimetype || !allowedMimes.includes(req.file.mimetype.toLowerCase())) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ detail: 'Invalid file type. Only audio uploads are permitted.' });
   }
 
   try {
