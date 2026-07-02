@@ -51,8 +51,8 @@ export default function RegisterPage() {
         <div className="flex flex-col items-center mb-6 text-center">
           <div className="relative mb-4 group">
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-600 to-cyan-500 blur-md opacity-40 group-hover:opacity-80 transition-opacity" />
-            <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-zinc-950 border border-white/10 text-white">
-              <Terminal size={26} className="text-purple-400 group-hover:text-cyan-400 transition-colors" />
+            <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-zinc-950 border border-white/10 text-white overflow-hidden">
+              <img src="/icon.png" alt="Logo" className="w-10 h-10 object-contain rounded-lg group-hover:scale-105 transition-transform" />
             </div>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">

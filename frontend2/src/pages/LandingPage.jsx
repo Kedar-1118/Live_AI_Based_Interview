@@ -231,8 +231,8 @@ const prompt = \`
         <div className="flex items-center gap-3">
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 to-cyan-500 rounded-xl blur opacity-40 group-hover:opacity-75 transition-opacity" />
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-zinc-950 border border-white/10 text-white">
-              <Terminal size={18} className="text-purple-400" />
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-zinc-950 border border-white/10 text-white overflow-hidden">
+              <img src="/icon.png" alt="Logo" className="w-7 h-7 object-contain rounded group-hover:scale-105 transition-transform" />
             </div>
           </div>
           <span className="font-extrabold text-lg tracking-tight text-white font-heading">

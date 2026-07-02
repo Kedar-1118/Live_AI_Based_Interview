@@ -34,8 +34,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, onOpenPalette }) 
           <Link to="/" className="flex items-center gap-3 font-semibold text-white overflow-hidden whitespace-nowrap z-10">
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 to-cyan-500 rounded-lg blur-md opacity-30 group-hover:opacity-60 transition-opacity" />
-              <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 text-white shrink-0">
-                <Terminal size={16} className="text-purple-400" />
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 text-white shrink-0 overflow-hidden">
+                <img src="/icon.png" alt="Logo" className="w-5 h-5 object-contain rounded group-hover:scale-105 transition-transform" />
               </div>
             </div>
             {!isCollapsed && (

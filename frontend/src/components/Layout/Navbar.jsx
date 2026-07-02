@@ -16,16 +16,7 @@ export default function Navbar() {
       <div className="navbar-inner container">
         <Link to="/" className="navbar-brand" id="navbar-brand">
           <div className="navbar-logo">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <defs>
-                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#667eea" />
-                  <stop offset="100%" stopColor="#764ba2" />
-                </linearGradient>
-              </defs>
-              <rect width="28" height="28" rx="8" fill="url(#logo-gradient)" />
-              <path d="M8 14L12 18L20 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src="/icon.png" alt="InterviewAI Logo" width="28" height="28" style={{ borderRadius: '6px' }} />
           </div>
           <span className="navbar-title">InterviewAI</span>
         </Link>
